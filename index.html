@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#efe6d6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Memo Crate">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+<title>Memo Crate</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700;900&display=swap">
+<style>
+/* Layout: full-bleed WebGL room; HUD floats top (title + theme swatches) and bottom (hint + actions). In-app scene themes drive the tokens. */
+:root {
+  --ink: #2a2118;
+  --ink-soft: #7a6a58;
+  --chip: rgba(255, 250, 240, .62);
+  --chip-line: rgba(60, 40, 20, .10);
+  --btn: #231b14;
+  --btn-ink: #f6eedf;
+  --sheet: #fbf6ea;
+  --sheet-line: #e6dcc8;
+  --bg: #efe6d6;
+  --danger: #b6382a;
+  --f-display: "Instrument Serif", "Noto Serif KR", Georgia, serif;
+  --f-serif: "Noto Serif KR", "Instrument Serif", Georgia, serif;
+  --f-body: "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", "Noto Sans KR", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+:root[data-scene="dusk"]  { --bg: #f1cfbb; --ink: #3a1f17; --ink-soft: #8a5a48; --chip: rgba(255, 240, 230, .6); }
+:root[data-scene="paper"] { --bg: #e7e8e4; --ink: #22252a; --ink-soft: #6c7078; --chip: rgba(255, 255, 255, .6); --btn: #22252a; }
+:root[data-scene="night"] { --bg: #1b2030; --ink: #eef0f7; --ink-soft: #9aa3bd; --chip: rgba(30, 36, 54, .62); --chip-line: rgba(255, 255, 255, .12); --btn: #f1e9d8; --btn-ink: #1b2030; --sheet: #262c3e; --sheet-line: #3a4258; color-scheme: dark; }
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); overflow: hidden; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; transition: background .6s; }
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+#c:active { cursor: grabbing; }
+
+.hud { position: fixed; left: 0; right: 0; pointer-events: none; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.hud > * { pointer-events: auto; }
+.top { top: 0; padding-top: calc(18px + env(safe-area-inset-top, 0px)); display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: start; }
+.brand small { display: block; font-family: var(--f-mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-soft); }
+.brand h1 { margin: 2px 0 0; font-family: var(--f-display); font-weight: 400; font-size: clamp(30px, 6vw, 40px); line-height: 1; letter-spacing: -.01em; }
+.themes { display: grid; justify-items: end; gap: 6px; }
+.swatches { display: flex; gap: 8px; }
+.sw { width: 22px; height: 22px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); position: relative; }
+.sw[aria-pressed="true"]::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid var(--ink); }
+.sw:focus-visible { outline: 2px solid var(--ink); outline-offset: 5px; }
+.themes span { font-family: var(--f-mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-soft); }
+.pill { grid-column: 1 / -1; justify-self: start; max-width: 100%; font-family: var(--f-mono); font-size: 12px; padding: 7px 12px; border-radius: 8px; background: var(--chip); border: 1px solid var(--chip-line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+
+.bottom { bottom: 0; padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; justify-items: center; gap: 12px; }
+.hint { font-size: 12px; color: var(--ink-soft); text-align: center; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.btn { font: 500 14px var(--f-body); border: 0; border-radius: 999px; padding: 10px 18px; cursor: pointer; background: var(--btn); color: var(--btn-ink); box-shadow: 0 6px 18px rgba(0,0,0,.18); transition: transform .15s; }
+.btn:active { transform: scale(.96); }
+.btn.ghost { background: var(--chip); color: var(--ink); border: 1px solid var(--chip-line); box-shadow: none; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* editor sheet */
+.scrim { position: fixed; inset: 0; background: rgba(20, 14, 8, .38); display: grid; align-items: end; justify-items: center; z-index: 10; opacity: 0; transition: opacity .25s; }
+.scrim.on { opacity: 1; }
+.sheet { width: min(560px, 100%); max-height: 88%; overflow: auto; background: var(--sheet); color: var(--ink); border-radius: 18px 18px 0 0; padding-block: 20px calc(20px + env(safe-area-inset-bottom, 0px)); padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; transform: translateY(30px); transition: transform .3s cubic-bezier(.2,.8,.2,1); box-shadow: 0 -10px 40px rgba(0,0,0,.2); }
+.scrim.on .sheet { transform: none; }
+@media (min-width: 640px) { .scrim { align-items: center; } .sheet { border-radius: 18px; } }
+.sheet header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.sheet header b { font-family: var(--f-mono); font-size: 11px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+.sheet header time { font-family: var(--f-mono); font-size: 11px; color: var(--ink-soft); }
+#f-title { font: 700 24px var(--f-serif); border: 0; border-bottom: 1px solid var(--sheet-line); background: transparent; color: var(--ink); padding: 6px 0; width: 100%; }
+#f-body { font: 400 15px/1.75 var(--f-body); border: 0; background: repeating-linear-gradient(transparent 0 25.25px, var(--sheet-line) 25.25px 26.25px); background-attachment: local; color: var(--ink); width: 100%; min-height: 220px; resize: vertical; padding: 0; }
+#f-title:focus, #f-body:focus { outline: none; }
+#f-title:focus-visible { border-bottom-color: var(--ink); }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.row label { font-family: var(--f-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); width: 56px; }
+.pal { width: 26px; height: 26px; border-radius: 6px; border: 0; padding: 0; cursor: pointer; position: relative; overflow: hidden; }
+.pal i { position: absolute; right: 0; bottom: 0; width: 50%; height: 50%; }
+.pal[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 2px; }
+.pat { font: 500 12px var(--f-body); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--sheet-line); background: transparent; color: var(--ink); cursor: pointer; }
+.pat[aria-pressed="true"] { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+.cover-edit { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 14px; align-items: start; }
+#f-preview { width: 112px; height: 112px; border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,.22); display: block; }
+.cover-ctl { display: grid; gap: 10px; min-width: 0; }
+.cover-ctl .row label { width: 44px; }
+.cover-ctl .row label.pat { width: auto; font: 500 12px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--ink); cursor: pointer; }
+.drop-hint { font-size: 11px; color: var(--ink-soft); }
+#f-msg { font-size: 12px; color: var(--danger); }
+#f-msg:empty { display: none; }
+@media (max-width: 380px) { .cover-edit { grid-template-columns: 1fr; } #f-preview { width: 96px; height: 96px; } }
+.sheet footer { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.sheet footer div { display: flex; gap: 8px; }
+.del { font: 500 14px var(--f-body); background: transparent; border: 0; color: var(--danger); cursor: pointer; padding: 10px 4px; }
+.loading { position: fixed; inset: 0; display: grid; place-items: center; font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; color: var(--ink-soft); }
+@media (prefers-reduced-motion: reduce) { .scrim, .sheet, body { transition: none; } }
+</style>
+
+</head>
+<body>
+<canvas id="c" aria-label="메모 상자 3D 화면"></canvas>
+<div class="loading" id="loading">LOADING CRATE…</div>
+
+<div class="hud top">
+  <div class="brand"><small>Memo Library</small><h1>Memo Crate</h1></div>
+  <div class="themes">
+    <div class="swatches" id="swatches" role="group" aria-label="장면 테마"></div>
+    <span id="theme-name">Daylight</span>
+  </div>
+  <div class="pill" id="pill">—</div>
+</div>
+
+<div class="hud bottom">
+  <div class="hint" id="hint">위아래로 드래그해서 넘기기 · 탭해서 꺼내기</div>
+  <div class="actions" id="actions"></div>
+</div>
+
+<div class="scrim" id="scrim" hidden>
+  <form class="sheet" id="sheet" autocomplete="off">
+    <header><b id="f-head">메모 편집</b><time id="f-date"></time></header>
+    <input id="f-title" maxlength="40" placeholder="제목">
+    <textarea id="f-body" placeholder="내용을 적어보세요"></textarea>
+    <div class="cover-edit">
+      <canvas id="f-preview" width="256" height="256" aria-label="커버 미리보기"></canvas>
+      <div class="cover-ctl">
+        <div class="row"><label>Photo</label>
+          <label class="pat" for="f-file" id="f-filebtn" tabindex="0">사진 등록</label>
+          <input type="file" id="f-file" accept="image/*" hidden>
+          <button type="button" class="pat" id="f-noimg" hidden>사진 빼기</button>
+        </div>
+        <div class="row"><label>Color</label><div class="row" id="f-pals"></div></div>
+        <div class="row"><label id="f-artlabel">Art</label><div class="row" id="f-pats"></div><div class="row" id="f-fxs" hidden></div></div>
+        <div class="drop-hint">사진은 정사각형으로 자동 크롭돼요 · 끌어다 놓거나 붙여넣어도 돼요</div>
+      </div>
+    </div>
+    <div id="f-msg" role="status"></div>
+    <footer>
+      <button type="button" class="del" id="f-del">삭제</button>
+      <div><button type="button" class="btn ghost" id="f-cancel">취소</button><button type="submit" class="btn" id="f-save">저장</button></div>
+    </footer>
+  </form>
+</div>
+
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+
+/* ---------- data ---------- */
+const KEY = 'memo-crate-v1';
+const PALS = [
+  { bg: '#e2412f', a: '#f4e6c8', b: '#1b1b1b', ink: '#f7ead0' },
+  { bg: '#f2a3b8', a: '#264b8f', b: '#f4e6c8', ink: '#f8efe0' },
+  { bg: '#f0a874', a: '#6cc2a0', b: '#e05a2b', ink: '#fff3e3' },
+  { bg: '#1f4e8c', a: '#f2c230', b: '#e8e2d0', ink: '#f4e6c8' },
+  { bg: '#2f8a5b', a: '#f1e3c3', b: '#d9452b', ink: '#f1e3c3' },
+  { bg: '#f3e9d6', a: '#d23b2a', b: '#1d2b4a', ink: '#1d2b4a' },
+  { bg: '#16313f', a: '#7fd1c7', b: '#f1c75b', ink: '#f2ead8' },
+  { bg: '#8a5ab8', a: '#f6c1d0', b: '#f3e9d6', ink: '#fbf2e6' },
+];
+const PATS = [['sun', '해'], ['arcs', '아치'], ['stripes', '사선'], ['letter', '글자'], ['blocks', '블록'], ['dots', '도트']];
+const day = n => Date.now() - n * 864e5;
+const SAMPLE = [
+  { title: '장보기', body: '우유 1L\n계란 한 판\n대파, 두부, 양파\n바질 페스토\n토요일 아침 빵집 들르기', pat: 0, pal: 0, t: day(0) },
+  { title: '3D 메모앱 아이디어', body: '레코드 크레이트처럼 메모를 손으로 넘기는 느낌.\n꺼내면 레코드판 대신 종이가 슬라이드되어 나온다.\n테마: 낮, 노을, 밤, 종이.', pat: 3, pal: 1, t: day(1) },
+  { title: '주말 계획', body: '토: 한강 자전거, 저녁은 친구들이랑 타코\n일: 대청소, 빨래, 책 50쪽', pat: 1, pal: 4, t: day(2) },
+  { title: '읽을 책', body: '— 이처럼 사소한 것들\n— 작별하지 않는다\n— 프로젝트 헤일메리\n— 디자인의 디자인', pat: 2, pal: 6, t: day(4) },
+  { title: '회의 메모 10/16', body: '온보딩 플로우 3단계로 축소\n푸시 알림 문구 A/B 테스트\n다음 리뷰: 목요일 2시', pat: 4, pal: 3, t: day(5) },
+  { title: '제주 여행 체크리스트', body: '렌터카 예약 확인\n충전기, 보조배터리\n선크림, 모자\n오름 하나는 꼭 오르기', pat: 5, pal: 2, t: day(8) },
+  { title: '좋아하는 문장', body: '천천히 가도 멈추지만 않으면 된다.', pat: 0, pal: 5, t: day(11) },
+  { title: '김치볶음밥', body: '1. 파기름 내기\n2. 김치 볶고 설탕 한 꼬집\n3. 밥 넣고 간장 한 바퀴\n4. 계란 반숙 올리기', pat: 3, pal: 7, t: day(13) },
+  { title: '운동 루틴', body: '월 수 금 — 스쿼트 4x10, 푸시업 3x15\n화 목 — 30분 러닝', pat: 2, pal: 0, t: day(17) },
+].map((m, i) => ({ id: 'm' + i + Date.now().toString(36), ...m }));
+
+const store = {
+  load() { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v : null; } catch { return null; } },
+  save() { try { localStorage.setItem(KEY, JSON.stringify(memos)); return true; } catch { return false; } },
+};
+let memos = store.load() || SAMPLE;
+
+const fmtDate = t => { const d = new Date(t); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const smooth = t => t * t * (3 - 2 * t);
+const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+async function ensureFonts(text) {
+  const s = (text || '') + '가나다ABC0123';
+  const faces = ['700 40px "Noto Serif KR"', '900 40px "Noto Serif KR"', '400 20px "Noto Sans KR"', '700 20px "Noto Sans KR"', '400 20px "IBM Plex Mono"', '400 40px "Instrument Serif"'];
+  try { await Promise.race([Promise.all(faces.map(f => document.fonts.load(f, s))), new Promise(r => setTimeout(r, 2500))]); } catch {}
+}
+
+/* ---------- canvas textures ---------- */
+function cnv(w, h = w) { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; }
+function grain(ctx, S, amt = 0.05) {
+  const img = ctx.getImageData(0, 0, S, S), d = img.data;
+  for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - .5) * 255 * amt; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+  ctx.putImageData(img, 0, 0);
+}
+/* photo covers: stored as a 1:1 JPEG, retro look applied at draw time */
+const FXS = [['film', '필름'], ['duo', '듀오톤'], ['dots', '하프톤']];
+const imgCache = new Map();
+function loadImg(src) {
+  if (!src) return Promise.resolve(null);
+  if (!imgCache.has(src)) {
+    const im = new Image();
+    imgCache.set(src, { im, p: new Promise(r => { im.onload = () => r(im); im.onerror = () => r(null); }) });
+    im.src = src;
+  }
+  return imgCache.get(src).p;
+}
+const readyImg = src => { const e = src && imgCache.get(src); return e && e.im.complete && e.im.naturalWidth ? e.im : null; };
+async function cropSquare(file, size = 640) {
+  const url = URL.createObjectURL(file);
+  try {
+    const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    const w = im.naturalWidth, h = im.naturalHeight, s = Math.min(w, h);
+    const [c, x] = cnv(size);
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(im, (w - s) / 2, (h - s) / 2, s, s, 0, 0, size, size);
+    return c.toDataURL('image/jpeg', .8);
+  } finally { URL.revokeObjectURL(url); }
+}
+const rgb = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const lumOf = ([r, g, b]) => .299 * r + .587 * g + .114 * b;
+function drawPhoto(x, S, im, p, fx) {
+  const tones = [p.bg, p.a, p.b].map(rgb).sort((a, b) => lumOf(a) - lumOf(b));
+  const dark = tones[0], light = tones[2], accent = rgb(p.bg);
+  if (fx === 'dots') {
+    // two-colour halftone print on cream stock, slightly misregistered
+    x.fillStyle = '#f1e6cf'; x.fillRect(0, 0, S, S);
+    const cell = 9, n = Math.ceil(S / cell), [, sx] = cnv(n);
+    sx.drawImage(im, 0, 0, n, n);
+    const d = sx.getImageData(0, 0, n, n).data;
+    const pass = (col, off, k) => {
+      x.fillStyle = `rgb(${col})`;
+      for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+        const q = (j * n + i) * 4, l = lumOf([d[q], d[q + 1], d[q + 2]]) / 255;
+        const r = Math.pow(1 - l, .85) * cell * k; if (r < .6) continue;
+        x.beginPath(); x.arc(i * cell + cell / 2 + off, j * cell + cell / 2 + off * .6, r, 0, Math.PI * 2); x.fill();
+      }
+    };
+    x.globalCompositeOperation = 'multiply'; x.globalAlpha = .85;
+    pass(accent, 3, .62); x.globalAlpha = 1; pass(dark, 0, .5);
+    x.globalCompositeOperation = 'source-over';
+    // printed label strip so the title stays readable over the dots
+    x.fillStyle = '#f1e6cf'; x.fillRect(0, 404, S, 108);
+    x.fillStyle = `rgb(${accent})`; x.fillRect(0, 404, S, 6);
+    return dark;
+  }
+  x.drawImage(im, 0, 0, S, S);
+  const id = x.getImageData(0, 0, S, S), d = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    let r = d[i], g = d[i + 1], b = d[i + 2];
+    if (fx === 'duo') {
+      let t = lumOf([r, g, b]) / 255; t = smooth(clamp((t - .08) / .84, 0, 1)); t = Math.round(t * 6) / 6;
+      r = dark[0] + (light[0] - dark[0]) * t; g = dark[1] + (light[1] - dark[1]) * t; b = dark[2] + (light[2] - dark[2]) * t;
+    } else {
+      // faded film: softer saturation, lifted blacks, warm cast, gentle posterize
+      const l = lumOf([r, g, b]);
+      r = l + (r - l) * .78; g = l + (g - l) * .78; b = l + (b - l) * .78;
+      r = 32 + r * .89; g = 22 + g * .84; b = 30 + b * .72;
+      r = Math.round(r / 18) * 18; g = Math.round(g / 18) * 18; b = Math.round(b / 18) * 18;
+    }
+    d[i] = r; d[i + 1] = g; d[i + 2] = b;
+  }
+  x.putImageData(id, 0, 0);
+  if (fx !== 'duo') {
+    x.globalCompositeOperation = 'soft-light'; x.fillStyle = p.bg; x.globalAlpha = .35; x.fillRect(0, 0, S, S);
+    x.globalCompositeOperation = 'screen'; x.globalAlpha = 1;
+    const lk = x.createRadialGradient(S * .95, S * .05, 0, S * .95, S * .05, S * .7);
+    lk.addColorStop(0, 'rgba(255,140,60,.55)'); lk.addColorStop(1, 'rgba(255,140,60,0)');
+    x.fillStyle = lk; x.fillRect(0, 0, S, S);
+    x.globalCompositeOperation = 'source-over';
+  }
+  // scanline wear + shade under the title
+  x.globalAlpha = .06; x.fillStyle = '#000';
+  for (let y = 0; y < S; y += 4) x.fillRect(0, y, S, 1);
+  x.globalAlpha = 1;
+  const g = x.createLinearGradient(0, S * .62, 0, S); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.55)');
+  x.fillStyle = g; x.fillRect(0, 0, S, S);
+  return null;
+}
+function drawCover(m) {
+  const S = 512, [c, x] = cnv(S), p = PALS[m.pal % PALS.length], pat = PATS[m.pat % PATS.length][0];
+  x.fillStyle = p.bg; x.fillRect(0, 0, S, S);
+  const circ = (cx, cy, r, col) => { x.fillStyle = col; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill(); };
+  const photo = readyImg(m.img);
+  let ink = p.ink;
+  if (photo) {
+    const dk = drawPhoto(x, S, photo, p, FXS[(m.fx || 0) % FXS.length][0]);
+    ink = dk ? `rgb(${dk})` : '#fbf3e4';
+    x.fillStyle = p.a; x.fillRect(36, 36, 96, 20);
+  } else if (pat === 'sun') {
+    circ(330, 210, 150, p.a); circ(180, 290, 74, p.b);
+    x.strokeStyle = p.bg; x.globalAlpha = .35; x.lineWidth = 3;
+    for (let y = 250; y < 470; y += 16) { x.beginPath(); x.moveTo(0, y); x.lineTo(S, y); x.stroke(); }
+    x.globalAlpha = 1;
+  } else if (pat === 'arcs') {
+    for (let r = 460, k = 0; r > 20; r -= 42, k++) { x.fillStyle = k % 2 ? p.bg : p.a; x.beginPath(); x.arc(256, 400, r, Math.PI, 0); x.fill(); }
+    x.fillStyle = p.b; x.fillRect(0, 400, S, 112);
+  } else if (pat === 'stripes') {
+    x.save(); x.translate(256, 256); x.rotate(-Math.PI / 5); x.fillStyle = p.a;
+    for (let i = -14; i < 14; i++) x.fillRect(i * 52, -600, 24, 1200);
+    x.restore(); x.fillStyle = p.b; x.fillRect(0, 330, S, 46); x.fillStyle = p.bg; x.fillRect(0, 376, S, 136);
+  } else if (pat === 'letter') {
+    x.fillStyle = p.a; x.fillRect(36, 36, 96, 20);
+    const ch = (m.title || '메').trim().charAt(0) || '메';
+    x.font = '900 400px "Noto Serif KR", serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText(ch, 300, 270);
+    x.textAlign = 'start'; x.textBaseline = 'alphabetic';
+  } else if (pat === 'blocks') {
+    x.fillStyle = p.a; x.fillRect(36, 36, 210, 210); x.fillStyle = p.b; x.fillRect(266, 36, 210, 100);
+    circ(371, 300, 105, p.a); x.fillStyle = p.b; x.fillRect(36, 266, 210, 70);
+  } else if (pat === 'dots') {
+    for (let i = 0; i < 6; i++) for (let j = 0; j < 5; j++) circ(58 + i * 79, 58 + j * 72, 24, (i + j) % 5 === 0 ? p.b : p.a);
+  }
+  // title block
+  x.shadowColor = 'rgba(0,0,0,.25)'; x.shadowBlur = 8;
+  x.fillStyle = ink; x.font = '700 40px "Noto Serif KR", serif';
+  const t = fit(x, m.title || '제목 없음', 430);
+  x.fillText(t, 36, 452);
+  x.font = '700 15px "Noto Sans KR", sans-serif'; x.globalAlpha = .9;
+  x.fillText(fmtDate(m.t) + '  ·  MEMO', 38, 482);
+  x.shadowBlur = 0; x.globalAlpha = 1;
+  // print wear
+  const g = x.createRadialGradient(256, 256, 180, 256, 256, 380); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.18)');
+  x.fillStyle = g; x.fillRect(0, 0, S, S); grain(x, S, .05);
+  return c;
+}
+function drawBack(m) {
+  const S = 256, [c, x] = cnv(S), p = PALS[m.pal % PALS.length];
+  x.fillStyle = p.bg; x.fillRect(0, 0, S, S); x.globalAlpha = .5; x.fillStyle = p.a; x.fillRect(18, 18, 60, 8);
+  x.font = '500 11px "IBM Plex Mono", monospace'; x.fillStyle = p.ink; x.fillText('MEMO CRATE · ' + fmtDate(m.t), 18, 236);
+  x.globalAlpha = 1; grain(x, S, .05); return c;
+}
+function fit(x, t, max) {
+  if (x.measureText(t).width <= max) return t;
+  const a = [...t];
+  while (a.length > 1 && x.measureText(a.join('') + '…').width > max) a.pop();
+  return a.join('') + '…';
+}
+function wrap(x, text, maxW) {
+  const out = [];
+  for (const para of String(text).split('\n')) {
+    if (!para) { out.push(''); continue; }
+    let line = '';
+    for (const ch of para) { if (x.measureText(line + ch).width > maxW && line) { out.push(line); line = ch === ' ' ? '' : ch; } else line += ch; }
+    out.push(line);
+  }
+  return out;
+}
+function drawPaper(m) {
+  const S = 1024, [c, x] = cnv(S);
+  x.fillStyle = '#fbf6ea'; x.beginPath(); x.roundRect(4, 4, S - 8, S - 8, 26); x.fill();
+  x.save(); x.clip();
+  x.strokeStyle = 'rgba(70,110,170,.22)'; x.lineWidth = 2;
+  const top = 250, lh = 58;
+  for (let y = top; y < S - 30; y += lh) { x.beginPath(); x.moveTo(0, y); x.lineTo(S, y); x.stroke(); }
+  x.strokeStyle = 'rgba(200,70,60,.35)'; x.beginPath(); x.moveTo(132, 0); x.lineTo(132, S); x.stroke();
+  x.fillStyle = '#2a2118'; x.font = '700 60px "Noto Serif KR", serif';
+  const t = fit(x, m.title || '제목 없음', 760);
+  x.fillText(t, 160, 170);
+  x.font = '400 24px "IBM Plex Mono", monospace'; x.fillStyle = '#8a7a66'; x.fillText(fmtDate(m.t), 162, 214);
+  x.font = '400 36px "Noto Sans KR", sans-serif'; x.fillStyle = '#3a2f24';
+  const lines = wrap(x, m.body || '', S - 160 - 70), max = Math.floor((S - top - 20) / lh);
+  lines.slice(0, max).forEach((l, i) => x.fillText(i === max - 1 && lines.length > max ? l.slice(0, -1) + '…' : l, 160, top + lh * (i + 1) - 14));
+  x.restore(); grain(x, S, .03);
+  return c;
+}
+function woodCanvas(base, S = 512, planks = 0) {
+  const [c, x] = cnv(S), col = new THREE.Color(base);
+  x.fillStyle = base; x.fillRect(0, 0, S, S);
+  if (planks) {
+    const h = S / planks;
+    for (let i = 0; i < planks; i++) {
+      const k = col.clone().offsetHSL(0, (Math.random() - .5) * .05, (Math.random() - .5) * .06);
+      x.fillStyle = '#' + k.getHexString(); x.fillRect(0, i * h, S, h - 2);
+      x.fillStyle = 'rgba(60,35,15,.25)'; x.fillRect(0, i * h + h - 2, S, 2);
+      const off = Math.random() * S; x.fillRect(off, i * h, 2, h);
+    }
+  }
+  for (let i = 0; i < 260; i++) {
+    x.strokeStyle = `rgba(${Math.random() < .5 ? '70,40,15' : '255,235,200'},${Math.random() * .08})`;
+    x.lineWidth = Math.random() * 2 + .5; const y = Math.random() * S;
+    x.beginPath(); x.moveTo(0, y); x.bezierCurveTo(S * .3, y + (Math.random() - .5) * 8, S * .7, y + (Math.random() - .5) * 8, S, y); x.stroke();
+  }
+  grain(x, S, .04); return c;
+}
+function cookieCanvas() {
+  const S = 512, [c, x] = cnv(S);
+  x.fillStyle = '#000'; x.fillRect(0, 0, S, S);
+  x.filter = 'blur(10px)'; x.fillStyle = '#fff';
+  const pad = 70, gap = 22, w = (S - pad * 2 - gap) / 2, h = (S - pad * 2 - gap * 2) / 3;
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 3; j++) x.fillRect(pad + i * (w + gap), pad + j * (h + gap), w, h);
+  x.filter = 'none'; return c;
+}
+
+/* ---------- three setup ---------- */
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.autoClear = false;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+const ANISO = renderer.capabilities.getMaxAnisotropy();
+const texOf = (c, rep) => { const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); } return t; };
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 60);
+
+const hemi = new THREE.HemisphereLight('#fff6e8', '#c9a27a', 1.3); scene.add(hemi);
+const spot = new THREE.SpotLight('#fff1d6', 2.6, 0, 0.62, 0.55, 0);
+spot.position.set(2.6, 4.6, 3.4); spot.target.position.set(-0.2, 0.2, -0.8);
+spot.castShadow = true; spot.shadow.mapSize.set(2048, 2048); spot.shadow.bias = -0.0004; spot.shadow.normalBias = 0.02; spot.shadow.radius = 4;
+spot.map = texOf(cookieCanvas());
+scene.add(spot, spot.target);
+// layer 1 = the pulled-out card, drawn on top of everything else
+const TOP = 1;
+const lamp = new THREE.PointLight('#ffb466', 0, 6, 1.6); lamp.position.set(-1.4, 1.5, 0.9); scene.add(lamp);
+[hemi, spot, lamp].forEach(l => l.layers.enable(TOP));
+
+const floorMat = new THREE.MeshStandardMaterial({ map: texOf(woodCanvas('#e3bf8c', 512, 6), 1), roughness: .75 });
+floorMat.map.repeat.set(8, 8);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const wallMat = new THREE.MeshStandardMaterial({ color: '#ece3d3', roughness: .95 });
+const wall = new THREE.Mesh(new THREE.PlaneGeometry(16, 8), wallMat); wall.position.set(0, 4, -2.6); wall.receiveShadow = true; scene.add(wall);
+const base = new THREE.Mesh(new THREE.BoxGeometry(16, .12, .03), new THREE.MeshStandardMaterial({ color: '#f5efe4', roughness: .8 })); base.position.set(0, .06, -2.585); base.receiveShadow = true; scene.add(base);
+
+/* crate */
+const crateMat = new THREE.MeshStandardMaterial({ map: texOf(woodCanvas('#b37a46')), roughness: .7 });
+const crate = new THREE.Group(); scene.add(crate);
+const box = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), crateMat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; crate.add(m); };
+box(1.24, .045, 1.24, 0, .0225, -.06);       // bottom
+box(1.24, .17, .045, 0, .085, .54);          // front
+box(1.24, .40, .045, 0, .20, -.66);          // back
+{
+  const sh = new THREE.Shape(); // side profile in (−z, y)
+  sh.moveTo(-.5625, 0); sh.lineTo(.6825, 0); sh.lineTo(.6825, .44); sh.lineTo(-.5625, .2); sh.lineTo(-.5625, 0);
+  const g = new THREE.ExtrudeGeometry(sh, { depth: .045, bevelEnabled: false }); g.rotateY(Math.PI / 2);
+  for (const sx of [-.62, .575]) { const m = new THREE.Mesh(g, crateMat); m.position.x = sx; m.castShadow = m.receiveShadow = true; crate.add(m); }
+}
+
+/* cards */
+const cardGeo = new THREE.BoxGeometry(1, 1, .014); cardGeo.translate(0, .5, 0);
+const paperGeo = new THREE.PlaneGeometry(.94, .94); paperGeo.translate(0, .5, 0);
+let cards = [];
+function disposeCard(g) {
+  const { mesh, paper } = g.userData;
+  for (const m of new Set(mesh.material)) { m.map?.dispose(); m.dispose(); }
+  paper.material.map?.dispose(); paper.material.dispose();
+  scene.remove(g);
+}
+function makeCard(m, i) {
+  const p = PALS[m.pal % PALS.length], g = new THREE.Group();
+  const edge = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.bg).offsetHSL(0, 0, -.08), roughness: .8 });
+  const top = new THREE.MeshStandardMaterial({ color: p.a, roughness: .8 });
+  const mats = [edge, edge, top, edge,
+    new THREE.MeshStandardMaterial({ map: texOf(drawCover(m)), roughness: .6 }),
+    new THREE.MeshStandardMaterial({ map: texOf(drawBack(m)), roughness: .7 })];
+  const mesh = new THREE.Mesh(cardGeo, mats); mesh.castShadow = mesh.receiveShadow = true; mesh.userData = { i, kind: 'card' };
+  const paper = new THREE.Mesh(paperGeo, new THREE.MeshStandardMaterial({ color: '#fff', roughness: .92, alphaTest: .5, side: THREE.DoubleSide }));
+  paper.position.z = -.011; paper.visible = false; paper.castShadow = true; paper.userData = { i, kind: 'paper' };
+  g.add(mesh, paper); g.userData = { mesh, paper, memo: m };
+  scene.add(g); return g;
+}
+function setLayer(g, l) { const { mesh, paper } = g.userData; if (mesh.layers.mask !== 1 << l) { mesh.layers.set(l); paper.layers.set(l); } }
+function ensurePaper(i) { const p = cards[i]?.userData.paper; if (p && !p.material.map) { p.material.map = texOf(drawPaper(memos[i])); p.material.needsUpdate = true; } }
+async function rebuild() {
+  await Promise.all([ensureFonts(memos.map(m => m.title + m.body).join('')), ...memos.map(m => loadImg(m.img))]);
+  cards.forEach(disposeCard);
+  cards = memos.map(makeCard);
+  if (pulled >= 0) { if (pulled < cards.length) ensurePaper(pulled); else { pulled = -1; pullT = slideT = 0; pullOn = false; } }
+  target = clamp(target, 0, Math.max(0, memos.length - 1));
+  dirtyUI = true;
+}
+
+/* ---------- state ---------- */
+let pos = 0, target = 0;          // flick position (float index)
+let pulled = -1, pullOn = false, pullT = 0, slideT = 0;
+let dirtyUI = true, camDist = 3, portrait = false;
+const sway = new THREE.Vector2(), swayT = new THREE.Vector2();
+const N = () => memos.length;
+const sel = () => clamp(Math.round(pos), 0, Math.max(0, N() - 1));
+
+/* camera framing */
+const LOOK = new THREE.Vector3(0, .42, -.05), EL = .52;
+function resize() {
+  const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), th = tv * camera.aspect;
+  camDist = Math.max(1.05 / tv, .92 / th);
+  portrait = camera.aspect < .85;
+}
+addEventListener('resize', resize);
+
+/* poses */
+const tmpQ = new THREE.Quaternion(), tmpE = new THREE.Euler(), tmpV = new THREE.Vector3(), dispQ = new THREE.Quaternion();
+const FWD = .58;
+function cratePose(i, outP, outQ) {
+  const n = N(), sp = n > 1 ? Math.min(.055, .78 / (n - 1)) : 0, d = i - pos;
+  let ang;
+  if (d < 0) ang = -.07 + smooth(clamp(-d, 0, 1)) * (FWD + .07);
+  else ang = -.07 - Math.min(d, 1) * .07;
+  const lift = Math.exp(-d * d * 6) * .05;
+  outP.set(0, .046 + lift, .28 - i * sp);
+  outQ.setFromEuler(tmpE.set(ang, 0, 0));
+}
+function displayPose(outP, outQ, slideE) {
+  const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), th = tv * camera.aspect;
+  const dist = portrait ? Math.max(.7 / th, 1.28 / tv) : Math.max(1.3 / th, 1.1 / tv);
+  const dir = camera.getWorldDirection(tmpV).clone();
+  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+  outP.copy(camera.position).addScaledVector(dir, dist);
+  if (portrait) outP.addScaledVector(up, .445 * slideE); else outP.addScaledVector(right, -.445 * slideE);
+  outP.addScaledVector(up, -.5);           // origin is the card's bottom edge
+  outQ.copy(camera.quaternion);
+}
+
+/* ---------- interaction ---------- */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); ray.layers.enableAll();
+function pick(e) {
+  ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const objs = cards.flatMap(g => [g.userData.mesh, g.userData.paper].filter(o => o.visible));
+  return ray.intersectObjects(objs, false)[0]?.object.userData;
+}
+function pullOut() { if (!N()) return; pulled = sel(); target = pulled; ensurePaper(pulled); pullOn = true; dirtyUI = true; }
+function putBack() { pullOn = false; dirtyUI = true; }
+
+let drag = null;
+canvas.addEventListener('pointerdown', e => {
+  if (!scrim.hidden) return;
+  drag = { x: e.clientX, y: e.clientY, t: performance.now(), start: target, ly: e.clientY, lt: performance.now(), vel: 0, moved: false };
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerType === 'mouse') swayT.set(e.clientX / innerWidth - .5, e.clientY / innerHeight - .5);
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (Math.hypot(dx, dy) > 7) drag.moved = true;
+  if (drag.moved && !pullOn && pulled < 0) {
+    target = clamp(drag.start + dy / 64, 0, Math.max(0, N() - 1));
+    const now = performance.now(), dt = Math.max(1, now - drag.lt);
+    drag.vel = drag.vel * .6 + ((e.clientY - drag.ly) / 64 / (dt / 1000)) * .4; drag.ly = e.clientY; drag.lt = now;
+  }
+});
+const endDrag = e => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (!d.moved && performance.now() - d.t < 600) return onTap(e);
+  if (pulled >= 0) { if (Math.abs(e.clientY - d.y) > 50) putBack(); return; }
+  target = clamp(Math.round(target + clamp(d.vel, -25, 25) * .12), 0, Math.max(0, N() - 1));
+};
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', () => { drag = null; target = Math.round(target); });
+function onTap(e) {
+  const hit = pick(e);
+  if (pulled >= 0) {
+    if (!pullOn) return;
+    if (hit?.kind === 'paper' && hit.i === pulled) openEditor(pulled); else putBack();
+    return;
+  }
+  if (!hit) return;
+  if (hit.i === sel()) pullOut(); else target = hit.i;
+}
+let wheelAcc = 0;
+canvas.addEventListener('wheel', e => {
+  e.preventDefault(); if (pulled >= 0) return;
+  wheelAcc += e.deltaY; if (Math.abs(wheelAcc) > 50) { target = clamp(Math.round(target) + Math.sign(wheelAcc), 0, Math.max(0, N() - 1)); wheelAcc = 0; }
+}, { passive: false });
+addEventListener('keydown', e => {
+  if (!scrim.hidden) { if (e.key === 'Escape') closeEditor(); return; }
+  if (pulled < 0 && (e.key === 'ArrowDown' || e.key === 'ArrowRight')) target = clamp(Math.round(target) + 1, 0, N() - 1);
+  else if (pulled < 0 && (e.key === 'ArrowUp' || e.key === 'ArrowLeft')) target = clamp(Math.round(target) - 1, 0, N() - 1);
+  else if (e.key === 'Enter') { if (pulled < 0) pullOut(); else if (pullOn) openEditor(pulled); }
+  else if (e.key === 'Escape' && pulled >= 0) putBack();
+  else if (e.key.toLowerCase() === 'n') newMemo();
+});
+
+/* ---------- HUD ---------- */
+const $ = id => document.getElementById(id);
+const pill = $('pill'), hint = $('hint'), actions = $('actions');
+let lastUI = '';
+function updateUI() {
+  const n = N(), k = sel(), m = memos[k];
+  const mode = n === 0 ? 'empty' : pulled >= 0 ? 'out' : 'in';
+  const text = n === 0 ? '0 / 0 · 메모가 없어요'
+    : mode === 'out' ? `${m.title || '제목 없음'} · ${fmtDate(m.t)} · ${[...(m.body || '')].length}자`
+    : `${k + 1} / ${n} · ${m.title || '제목 없음'} — ${fmtDate(m.t)}`;
+  if (pill.textContent !== text) pill.textContent = text;
+  if (mode === lastUI) return; lastUI = mode;
+  hint.textContent = mode === 'empty' ? '첫 메모를 상자에 넣어보세요'
+    : mode === 'out' ? '종이를 탭하면 편집 · 바깥을 탭하면 다시 넣기'
+    : '위아래로 드래그해서 넘기기 · 탭해서 꺼내기';
+  actions.innerHTML = '';
+  const add = (label, fn, ghost) => { const b = document.createElement('button'); b.className = 'btn' + (ghost ? ' ghost' : ''); b.type = 'button'; b.textContent = label; b.onclick = fn; actions.append(b); };
+  if (mode === 'out') { add('편집', () => openEditor(pulled), true); add('다시 넣기', putBack); }
+  else { add('+ 새 메모', newMemo, true); if (mode === 'in') add('꺼내기', pullOut); }
+}
+
+/* ---------- editor ---------- */
+const scrim = $('scrim'), form = $('sheet'), fTitle = $('f-title'), fBody = $('f-body'), fDel = $('f-del');
+let editIdx = -1, editNew = false, draft = { pal: 0, pat: 0, img: null, fx: 0 }, delArmed = false;
+const pals = $('f-pals'), pats = $('f-pats'), fxs = $('f-fxs'), fFile = $('f-file'), fNoImg = $('f-noimg'), fMsg = $('f-msg'), fPrev = $('f-preview');
+PALS.forEach((p, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pal'; b.style.background = p.bg; b.innerHTML = `<i style="background:${p.a}"></i>`; b.setAttribute('aria-label', '커버 색 ' + (i + 1)); b.onclick = () => { draft.pal = i; syncPick(); }; pals.append(b); });
+PATS.forEach(([, name], i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pat'; b.textContent = name; b.onclick = () => { draft.pat = i; syncPick(); }; pats.append(b); });
+FXS.forEach(([, name], i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'pat'; b.textContent = name; b.onclick = () => { draft.fx = i; syncPick(); }; fxs.append(b); });
+function syncPick() {
+  [...pals.children].forEach((b, i) => b.setAttribute('aria-pressed', i === draft.pal));
+  [...pats.children].forEach((b, i) => b.setAttribute('aria-pressed', i === draft.pat));
+  [...fxs.children].forEach((b, i) => b.setAttribute('aria-pressed', i === draft.fx));
+  const has = !!draft.img;
+  pats.hidden = has; fxs.hidden = !has; fNoImg.hidden = !has;
+  $('f-artlabel').textContent = has ? 'Look' : 'Art';
+  $('f-filebtn').textContent = has ? '사진 바꾸기' : '사진 등록';
+  drawPreview();
+}
+let prevTimer = 0;
+function drawPreview() {
+  clearTimeout(prevTimer);
+  prevTimer = setTimeout(async () => {
+    const m = memos[editIdx]; if (!m) return;
+    await loadImg(draft.img);
+    const c = drawCover({ ...m, title: fTitle.value.trim() || '제목 없음', ...draft });
+    fPrev.getContext('2d').drawImage(c, 0, 0, fPrev.width, fPrev.height);
+  }, 60);
+}
+fTitle.addEventListener('input', drawPreview);
+async function takePhoto(file) {
+  if (!file || !file.type.startsWith('image/')) { fMsg.textContent = '이미지 파일만 등록할 수 있어요.'; return; }
+  fMsg.textContent = '';
+  try { draft.img = await cropSquare(file); await loadImg(draft.img); syncPick(); }
+  catch { fMsg.textContent = '이 사진은 열 수 없어요. JPG나 PNG 사진을 골라주세요.'; }
+}
+fFile.addEventListener('change', () => { takePhoto(fFile.files[0]); fFile.value = ''; });
+$('f-filebtn').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fFile.click(); } });
+fNoImg.onclick = () => { draft.img = null; syncPick(); };
+form.addEventListener('dragover', e => e.preventDefault());
+form.addEventListener('drop', e => { e.preventDefault(); const f = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/')); if (f) takePhoto(f); });
+form.addEventListener('paste', e => { const f = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/')); if (f) { e.preventDefault(); takePhoto(f); } });
+function openEditor(i, isNew = false) {
+  const m = memos[i]; if (!m) return;
+  editIdx = i; editNew = isNew; draft = { pal: m.pal, pat: m.pat, img: m.img || null, fx: m.fx || 0 }; delArmed = false; fMsg.textContent = '';
+  fDel.textContent = '삭제'; $('f-head').textContent = isNew ? '새 메모' : '메모 편집'; $('f-date').textContent = fmtDate(m.t);
+  fTitle.value = m.title; fBody.value = m.body; syncPick();
+  scrim.hidden = false; requestAnimationFrame(() => scrim.classList.add('on'));
+  setTimeout(() => (isNew ? fTitle : fBody).focus({ preventScroll: true }), 60);
+}
+function closeEditor() {
+  scrim.classList.remove('on'); setTimeout(() => (scrim.hidden = true), 250);
+  if (editNew) { const m = memos[editIdx]; if (m && !m.title && !m.body && !m.img) removeMemo(editIdx); }
+  editIdx = -1; editNew = false;
+}
+async function removeMemo(i) {
+  memos.splice(i, 1); store.save();
+  pulled = -1; pullOn = false; pullT = slideT = 0;
+  target = pos = clamp(i, 0, Math.max(0, N() - 1));
+  await rebuild();
+}
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const m = memos[editIdx]; if (!m) return closeEditor();
+  const before = { ...m };
+  Object.assign(m, { title: fTitle.value.trim(), body: fBody.value.replace(/\s+$/, ''), pal: draft.pal, pat: draft.pat, img: draft.img, fx: draft.fx });
+  if (!m.img) delete m.img;
+  if (!m.title && m.body) m.title = m.body.split('\n')[0].slice(0, 20);
+  if (!store.save()) {
+    Object.keys(m).forEach(k => delete m[k]); Object.assign(m, before); store.save();
+    fMsg.textContent = '브라우저 저장 공간이 꽉 찼어요. 사진이 있는 다른 메모를 지우거나 이 메모의 사진을 빼고 저장해주세요.';
+    return;
+  }
+  editNew = false; closeEditor(); await rebuild();
+});
+$('f-cancel').onclick = closeEditor;
+scrim.addEventListener('pointerdown', e => { if (e.target === scrim) closeEditor(); });
+fDel.onclick = async () => {
+  if (!delArmed) { delArmed = true; fDel.textContent = '한 번 더 누르면 삭제'; return; }
+  const i = editIdx; editNew = false; closeEditor(); await removeMemo(i);
+};
+async function newMemo() {
+  if (!scrim.hidden) return;
+  const m = { id: 'm' + Date.now().toString(36), title: '', body: '', pal: Math.floor(Math.random() * PALS.length), pat: Math.floor(Math.random() * PATS.length), t: Date.now() };
+  memos.unshift(m); pulled = -1; pullOn = false; pullT = slideT = 0; pos = target = 0;
+  await rebuild(); pullOut(); openEditor(0, true);
+}
+
+/* ---------- themes ---------- */
+const THEMES = {
+  daylight: { label: 'Daylight', dot: '#f3ead9', bg: '#efe6d6', wall: '#ece3d3', floor: '#ffffff', sky: '#fff6e8', gnd: '#c9a27a', hemi: 1.3, spot: '#fff1d6', spotI: 2.6, lamp: 0, exp: 1.05 },
+  dusk:     { label: 'Dusk', dot: '#e89a78', bg: '#f1cfbb', wall: '#efc9b6', floor: '#ffd9c4', sky: '#ffd8c4', gnd: '#b0705a', hemi: 1.05, spot: '#ff9f62', spotI: 2.9, lamp: 0, exp: 1.05 },
+  paper:    { label: 'Paper', dot: '#cfd1cc', bg: '#e7e8e4', wall: '#e9eae6', floor: '#e6e2dc', sky: '#ffffff', gnd: '#9c9a94', hemi: 1.45, spot: '#ffffff', spotI: 1.9, lamp: 0, exp: 1.0 },
+  night:    { label: 'Night', dot: '#2b3350', bg: '#1b2030', wall: '#242b40', floor: '#6c7894', sky: '#5a6a9a', gnd: '#20263a', hemi: .45, spot: '#9fb6ff', spotI: 1.3, lamp: 2.2, exp: 1.1 },
+};
+let themeKey = 'daylight';
+try { const t = localStorage.getItem(KEY + ':theme'); if (THEMES[t]) themeKey = t; } catch {}
+const swatches = $('swatches');
+for (const [k, t] of Object.entries(THEMES)) {
+  const b = document.createElement('button'); b.className = 'sw'; b.type = 'button'; b.style.background = t.dot; b.dataset.k = k; b.setAttribute('aria-label', t.label + ' 테마');
+  b.onclick = () => applyTheme(k); swatches.append(b);
+}
+function applyTheme(k) {
+  themeKey = k; const t = THEMES[k];
+  try { localStorage.setItem(KEY + ':theme', k); } catch {}
+  document.documentElement.dataset.scene = k;
+  [...swatches.children].forEach(b => b.setAttribute('aria-pressed', b.dataset.k === k));
+  $('theme-name').textContent = t.label;
+  scene.background = new THREE.Color(t.bg); scene.fog = new THREE.Fog(t.bg, 7, 16);
+  wallMat.color.set(t.wall); floorMat.color.set(t.floor);
+  hemi.color.set(t.sky); hemi.groundColor.set(t.gnd); hemi.intensity = t.hemi;
+  spot.color.set(t.spot); spot.intensity = t.spotI; lamp.intensity = t.lamp;
+  renderer.toneMappingExposure = t.exp;
+}
+
+/* ---------- loop ---------- */
+const P = new THREE.Vector3(), Q = new THREE.Quaternion(), P2 = new THREE.Vector3(), Q2 = new THREE.Quaternion();
+const approach = (v, to, s) => v < to ? Math.min(to, v + s) : Math.max(to, v - s);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  const k = reduce ? 1 : 1 - Math.exp(-dt * 11);
+  pos += (target - pos) * k; if (Math.abs(target - pos) < 1e-4) pos = target;
+
+  // camera with soft parallax
+  sway.lerp(swayT, 1 - Math.exp(-dt * 3));
+  const d = camDist;
+  camera.position.set(LOOK.x + sway.x * .35, LOOK.y + Math.sin(EL) * d - sway.y * .2, LOOK.z + Math.cos(EL) * d);
+  camera.lookAt(LOOK); camera.updateMatrixWorld();
+
+  // pull state machine
+  const sp = reduce ? 10 : 1;
+  if (pullOn) { pullT = approach(pullT, 1, dt * 1.9 * sp); if (pullT > .8) slideT = approach(slideT, 1, dt * 2.2 * sp); }
+  else { slideT = approach(slideT, 0, dt * 3.2 * sp); if (slideT < .25) pullT = approach(pullT, 0, dt * 2.0 * sp); if (pullT === 0 && slideT === 0 && pulled >= 0) { pulled = -1; dirtyUI = true; } }
+
+  cards.forEach((g, i) => {
+    cratePose(i, P, Q);
+    const { paper } = g.userData;
+    if (i === pulled && pullT > 0) {
+      const se = ease(slideT);
+      displayPose(P2, Q2, se);
+      const tXZ = ease(clamp((pullT - .12) / .88, 0, 1)), tY = 1 - Math.pow(1 - pullT, 3);
+      g.position.set(THREE.MathUtils.lerp(P.x, P2.x, tXZ), THREE.MathUtils.lerp(P.y, P2.y, tY) + Math.sin(Math.PI * pullT) * .25, THREE.MathUtils.lerp(P.z, P2.z, tXZ));
+      g.quaternion.copy(Q).slerp(Q2, ease(pullT));
+      paper.visible = true;
+      setLayer(g, pullT > .3 ? TOP : 0);
+      if (portrait) paper.position.set(0, -.92 * se, -.011); else paper.position.set(.92 * se, 0, -.011);
+      paper.rotation.z = (portrait ? -1 : 1) * Math.sin(Math.PI * se) * .04;
+    } else {
+      g.position.copy(P); g.quaternion.copy(Q); paper.visible = false; setLayer(g, 0);
+    }
+  });
+
+  if (dirtyUI || true) { updateUI(); dirtyUI = false; }
+  renderer.clear();
+  camera.layers.set(0); renderer.render(scene, camera);
+  if (pulled >= 0 && pullT > .3) {
+    renderer.clearDepth();
+    camera.layers.set(TOP); renderer.render(scene, camera);
+  }
+  camera.layers.set(0);
+  requestAnimationFrame(frame);
+}
+
+resize(); applyTheme(themeKey);
+await rebuild();
+$('loading').remove();
+requestAnimationFrame(frame);
+</script>
+
+<script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
