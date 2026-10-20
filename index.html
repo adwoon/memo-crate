@@ -58,7 +58,23 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
 .sw[aria-pressed="true"]::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid var(--ink); }
 .sw:focus-visible { outline: 2px solid var(--ink); outline-offset: 5px; }
 .themes span { font-family: var(--f-mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-soft); }
-.pill { grid-column: 1 / -1; justify-self: start; max-width: 100%; font-family: var(--f-mono); font-size: 12px; padding: 7px 12px; border-radius: 8px; background: var(--chip); border: 1px solid var(--chip-line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.pill { grid-column: 1 / -1; justify-self: start; max-width: 100%; font-family: var(--f-mono); font-size: 12px; padding: 7px 12px; border-radius: 8px; background: var(--chip); border: 1px solid var(--chip-line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; color: var(--ink); cursor: pointer; text-align: left; }
+.pill::after { content: "  ▾"; color: var(--ink-soft); }
+.pill:hover { border-color: var(--ink-soft); }
+.pill:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.list-q { font: 14px var(--f-body); color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--sheet-line); padding: 8px 0; width: 100%; }
+.list-q:focus-visible { outline: none; border-bottom-color: var(--ink); }
+.crate-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: min(60vh, 520px); overflow: auto; }
+.li { display: grid; grid-template-columns: 48px 26px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; text-align: left; background: transparent; border: 0; padding: 8px; border-radius: 10px; color: var(--ink); cursor: pointer; font: inherit; }
+.li:hover, .li:focus-visible { background: var(--chip); outline: none; }
+.li[aria-current="true"] { background: var(--chip); box-shadow: inset 0 0 0 1px var(--chip-line); }
+.li canvas { width: 48px; height: 48px; border-radius: 2px; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.li .n { font: 12px var(--f-mono); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.li .t { min-width: 0; display: grid; gap: 2px; }
+.li .t b { font: 700 15px var(--f-serif); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li .t small { font: 11px var(--f-mono); color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.li .tag { font: 11px var(--f-mono); color: var(--ink-soft); }
+.list-empty { font-size: 13px; color: var(--ink-soft); padding: 12px 8px; }
 
 .bottom { bottom: 0; padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); display: grid; justify-items: center; gap: 12px; }
 .hint { font-size: 12px; color: var(--ink-soft); text-align: center; }
@@ -110,6 +126,23 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
 .ins a.btn { justify-self: start; text-decoration: none; }
 .ins code { font-family: var(--f-mono); font-size: 12px; background: var(--chip); padding: 2px 6px; border-radius: 4px; word-break: break-all; }
 .view-reset { font-size: 12px; padding: 6px 12px; }
+.player { display: flex; align-items: center; gap: 10px; width: min(440px, 100%); padding: 8px; border-radius: 16px; background: var(--chip); border: 1px solid var(--chip-line); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.player .disc { width: 38px; height: 38px; border-radius: 50%; flex: none; background: radial-gradient(circle, #111 0 7%, var(--lbl, #e2412f) 8% 30%, #161616 31% 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); animation: spin 1.8s linear infinite; animation-play-state: paused; }
+.player.playing .disc { animation-play-state: running; }
+.player .yt { width: 68px; height: 38px; border: 0; border-radius: 6px; flex: none; background: #000; }
+.player .meta { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.player .meta b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player .meta span { font: 11px var(--f-mono); color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player input[type="range"] { width: 100%; height: 14px; margin: 0; accent-color: var(--ink); }
+.pbtn { width: 36px; height: 36px; border-radius: 50%; border: 0; flex: none; display: grid; place-items: center; cursor: pointer; background: var(--btn); color: var(--btn-ink); font: 600 13px var(--f-body); text-decoration: none; }
+.pbtn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--chip-line); }
+.pbtn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .player .disc { animation: none; } }
+.sheet .row label.pat { width: auto; font: 500 12px var(--f-body); letter-spacing: 0; text-transform: none; color: var(--ink); cursor: pointer; }
+#f-link { flex: 1 1 180px; min-width: 0; font: 13px var(--f-body); color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--sheet-line); padding: 6px 0; }
+#f-link:focus-visible { outline: none; border-bottom-color: var(--ink); }
+.music-name { font-size: 12px; color: var(--ink-soft); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .loading { position: fixed; inset: 0; display: grid; place-items: center; font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; color: var(--ink-soft); }
 @media (prefers-reduced-motion: reduce) { .scrim, .sheet, body { transition: none; } }
 </style>
@@ -126,10 +159,17 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
     <span id="theme-name">Daylight</span>
     <button type="button" class="install-link" id="install-open" hidden>앱으로 설치</button>
   </div>
-  <div class="pill" id="pill">—</div>
+  <button type="button" class="pill" id="pill" aria-haspopup="dialog" aria-label="메모 목록 열기">—</button>
 </div>
 
 <div class="hud bottom">
+  <div class="player" id="player" hidden>
+    <div class="disc" id="pl-disc"></div>
+    <div class="meta"><b id="pl-title"></b><span id="pl-sub"></span><input type="range" id="pl-seek" min="0" max="1000" value="0" aria-label="재생 위치"></div>
+    <a class="pbtn ghost" id="pl-open" target="_blank" rel="noopener" hidden aria-label="원래 링크 열기">↗</a>
+    <button type="button" class="pbtn" id="pl-toggle" aria-label="재생">▶</button>
+    <button type="button" class="pbtn ghost" id="pl-stop" aria-label="음악 끄기">✕</button>
+  </div>
   <button type="button" class="btn ghost view-reset" id="view-reset" hidden>정면으로</button>
   <div class="hint" id="hint">카드를 위아래로 넘기기 · 배경을 끌어 둘러보기 · 탭해서 꺼내기</div>
   <div class="actions" id="actions"></div>
@@ -159,6 +199,14 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
   </div>
 </div>
 
+<div class="scrim" id="list-scrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="list-title">
+    <header><b id="list-title">Crate</b><button type="button" class="btn ghost" id="list-close">닫기</button></header>
+    <input id="list-q" class="list-q" type="search" placeholder="제목이나 내용으로 찾기" aria-label="메모 찾기">
+    <ol class="crate-list" id="crate-list"></ol>
+  </div>
+</div>
+
 <div class="scrim" id="scrim" hidden>
   <form class="sheet" id="sheet" autocomplete="off">
     <header><b id="f-head">메모 편집</b><time id="f-date"></time></header>
@@ -177,6 +225,13 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
         <div class="row"><label>Layout</label><button type="button" class="pat" id="f-reroll">다른 배치</button></div>
         <div class="drop-hint">사진은 정사각형으로 자동 크롭돼요 · 끌어다 놓거나 붙여넣어도 돼요</div>
       </div>
+    </div>
+    <div class="row"><label>Music</label>
+      <label class="pat" for="f-audio" id="f-audiobtn" tabindex="0">음악 파일</label>
+      <input type="file" id="f-audio" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac,.aac" hidden>
+      <input id="f-link" type="url" inputmode="url" placeholder="또는 링크 붙여넣기 (mp3 · YouTube · Spotify…)" aria-label="음악 링크">
+      <button type="button" class="pat" id="f-nomusic" hidden>음악 빼기</button>
+      <span class="music-name" id="f-music"></span>
     </div>
     <div id="f-msg" role="status"></div>
     <footer>
@@ -465,9 +520,35 @@ function drawCover(m) {
     ink = dk ? `rgb(${dk})` : '#fbf3e4';
   } else drawArt(x, S, m, p, pat, R);
   drawTitle(x, S, m, p, R, ink, !!photo || pat === 'stripes' || pat === 'dots' || pat === 'arcs');
+  if (m.music) drawMusicBadge(x, S, p);
   // print wear
   const g = x.createRadialGradient(256, 256, 180, 256, 256, 380); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.18)');
   x.fillStyle = g; x.fillRect(0, 0, S, S); grain(x, S, .05);
+  return c;
+}
+function drawMusicBadge(x, S, p) {
+  const cx = S - 46, cy = S - 46;
+  x.fillStyle = '#141414'; x.beginPath(); x.arc(cx, cy, 28, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = 'rgba(255,255,255,.16)'; x.lineWidth = 1;
+  for (let r = 13; r < 27; r += 4) { x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.stroke(); }
+  x.fillStyle = p.a; x.beginPath(); x.arc(cx, cy, 9, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#141414'; x.beginPath(); x.arc(cx, cy, 2, 0, Math.PI * 2); x.fill();
+}
+function drawDisc(m) {
+  const S = 512, [c, x] = cnv(S), p = PALS[m.pal % PALS.length];
+  x.fillStyle = '#121212'; x.beginPath(); x.arc(256, 256, 256, 0, Math.PI * 2); x.fill();
+  for (let r = 98; r < 250; r += 3) { x.strokeStyle = `rgba(255,255,255,${r % 27 < 3 ? .1 : .035})`; x.lineWidth = 1; x.beginPath(); x.arc(256, 256, r, 0, Math.PI * 2); x.stroke(); }
+  if (x.createConicGradient) {
+    const g = x.createConicGradient(0, 256, 256);
+    [[0, 0], [.1, .14], [.22, 0], [.55, 0], [.62, .1], [.72, 0], [1, 0]].forEach(([o, a]) => g.addColorStop(o, `rgba(255,255,255,${a})`));
+    x.fillStyle = g; x.beginPath(); x.arc(256, 256, 250, 0, Math.PI * 2); x.arc(256, 256, 96, 0, Math.PI * 2, true); x.fill();
+  }
+  x.fillStyle = p.bg; x.beginPath(); x.arc(256, 256, 92, 0, Math.PI * 2); x.fill();
+  x.fillStyle = p.a; x.beginPath(); x.moveTo(256, 256); x.arc(256, 256, 92, Math.PI * 1.15, Math.PI * 1.85); x.fill();
+  x.fillStyle = p.ink; x.textAlign = 'center';
+  x.font = '700 20px "Noto Sans KR", sans-serif'; x.fillText(fit(x, m.title || '제목 없음', 150), 256, 306);
+  x.font = '500 11px "IBM Plex Mono", monospace'; x.fillText('SIDE A · 33⅓ RPM', 256, 236);
+  x.fillStyle = '#0b0b0b'; x.beginPath(); x.arc(256, 256, 6, 0, Math.PI * 2); x.fill();
   return c;
 }
 function drawBack(m) {
@@ -586,12 +667,14 @@ box(1.24, .40, .045, 0, .20, -.66);          // back
 
 /* cards */
 const cardGeo = new THREE.BoxGeometry(1, 1, .014); cardGeo.translate(0, .5, 0);
+const discGeo = new THREE.CylinderGeometry(.47, .47, .004, 72); discGeo.rotateX(Math.PI / 2);
 const paperGeo = new THREE.PlaneGeometry(.94, .94); paperGeo.translate(0, .5, 0);
 let cards = [];
 function disposeCard(g) {
   const { mesh, paper } = g.userData;
   for (const m of new Set(mesh.material)) { m.map?.dispose(); m.dispose(); }
   paper.material.map?.dispose(); paper.material.dispose();
+  const { disc } = g.userData; if (disc) { disc.material.map?.dispose(); disc.material.dispose(); }
   scene.remove(g);
 }
 function makeCard(m, i) {
@@ -604,10 +687,16 @@ function makeCard(m, i) {
   const mesh = new THREE.Mesh(cardGeo, mats); mesh.castShadow = mesh.receiveShadow = true; mesh.userData = { i, kind: 'card' };
   const paper = new THREE.Mesh(paperGeo, new THREE.MeshStandardMaterial({ color: '#fff', roughness: .92, alphaTest: .5, side: THREE.DoubleSide }));
   paper.position.z = -.011; paper.visible = false; paper.castShadow = true; paper.userData = { i, kind: 'paper' };
-  g.add(mesh, paper); g.userData = { mesh, paper, memo: m };
+  let disc = null;
+  if (m.music) {
+    disc = new THREE.Mesh(discGeo, new THREE.MeshStandardMaterial({ map: texOf(drawDisc(m)), roughness: .32, metalness: .15 }));
+    disc.position.set(0, .5, -.018); disc.visible = false; disc.castShadow = true; disc.userData = { i, kind: 'disc' };
+    g.add(disc);
+  }
+  g.add(mesh, paper); g.userData = { mesh, paper, disc, memo: m };
   scene.add(g); return g;
 }
-function setLayer(g, l) { const { mesh, paper } = g.userData; if (mesh.layers.mask !== 1 << l) { mesh.layers.set(l); paper.layers.set(l); } }
+function setLayer(g, l) { const { mesh, paper, disc } = g.userData; if (mesh.layers.mask !== 1 << l) { mesh.layers.set(l); paper.layers.set(l); disc?.layers.set(l); } }
 function ensurePaper(i) { const p = cards[i]?.userData.paper; if (p && !p.material.map) { p.material.map = texOf(drawPaper(memos[i])); p.material.needsUpdate = true; } }
 async function rebuild() {
   await Promise.all([ensureFonts(memos.map(m => m.title + m.body).join('')), ...memos.map(m => loadImg(m.img))]);
@@ -666,16 +755,16 @@ const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); ray.layers.enableA
 function pick(e) {
   ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
-  const objs = cards.flatMap(g => [g.userData.mesh, g.userData.paper].filter(o => o.visible));
+  const objs = cards.flatMap(g => [g.userData.mesh, g.userData.paper, g.userData.disc].filter(o => o && o.visible));
   return ray.intersectObjects(objs, false)[0]?.object.userData;
 }
-function pullOut() { if (!N()) return; pulled = sel(); target = pulled; ensurePaper(pulled); pullOn = true; dirtyUI = true; }
+function pullOut() { if (!N()) return; pulled = sel(); target = pulled; ensurePaper(pulled); pullOn = true; dirtyUI = true; if (memos[pulled].music) playMemo(memos[pulled]); }
 // a memo you just read goes back in at the front of the crate, like a record you just played
 function bringToFront(i) {
   if (i <= 0 || i >= memos.length) return;
   memos.unshift(memos.splice(i, 1)[0]);
   cards.unshift(cards.splice(i, 1)[0]);
-  cards.forEach((g, j) => { g.userData.mesh.userData.i = j; g.userData.paper.userData.i = j; });
+  cards.forEach((g, j) => { g.userData.mesh.userData.i = j; g.userData.paper.userData.i = j; if (g.userData.disc) g.userData.disc.userData.i = j; });
   store.save();
 }
 function putBack() {
@@ -753,7 +842,8 @@ function onTap(e) {
   const hit = pick(e);
   if (pulled >= 0) {
     if (!pullOn) return;
-    if (hit?.kind === 'paper' && hit.i === pulled) openEditor(pulled); else putBack();
+    if (hit?.kind === 'disc' && hit.i === pulled) togglePlay(memos[pulled]);
+    else if (hit?.kind === 'paper' && hit.i === pulled) openEditor(pulled); else putBack();
     return;
   }
   if (!hit) return;
@@ -768,12 +858,13 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 addEventListener('keydown', e => {
   if (!scrim.hidden) { if (e.key === 'Escape') closeEditor(); return; }
-  if (!$('ins-scrim').hidden) return;
+  if (!$('ins-scrim').hidden || !$('list-scrim').hidden) return;
   if (pulled < 0 && (e.key === 'ArrowDown' || e.key === 'ArrowRight')) target = clamp(Math.round(target) + 1, 0, N() - 1);
   else if (pulled < 0 && (e.key === 'ArrowUp' || e.key === 'ArrowLeft')) target = clamp(Math.round(target) - 1, 0, N() - 1);
   else if (e.key === 'Enter') { if (pulled < 0) pullOut(); else if (pullOn) openEditor(pulled); }
   else if (e.key === 'Escape' && pulled >= 0) putBack();
   else if (e.key === '0') resetView();
+  else if (e.key === ' ' && np) { e.preventDefault(); togglePlay(); }
   else if (e.key.toLowerCase() === 'n') newMemo();
 });
 
@@ -790,13 +881,115 @@ function updateUI() {
   if (pill.textContent !== text) pill.textContent = text;
   if (mode === lastUI) return; lastUI = mode;
   hint.textContent = mode === 'empty' ? '첫 메모를 상자에 넣어보세요'
-    : mode === 'out' ? '종이를 탭하면 편집 · 바깥을 탭하면 다시 넣기'
+    : mode === 'out' ? '종이를 탭하면 편집 · 레코드를 탭하면 재생/정지 · 바깥을 탭하면 넣기'
     : '카드를 위아래로 넘기기 · 배경을 끌어 둘러보기 · 탭해서 꺼내기';
   actions.innerHTML = '';
   const add = (label, fn, ghost) => { const b = document.createElement('button'); b.className = 'btn' + (ghost ? ' ghost' : ''); b.type = 'button'; b.textContent = label; b.onclick = fn; actions.append(b); };
   if (mode === 'out') { add('편집', () => openEditor(pulled), true); add('다시 넣기', putBack); }
   else { add('+ 새 메모', newMemo, true); if (mode === 'in') add('꺼내기', pullOut); }
 }
+
+/* ---------- music ---------- */
+// audio files live in IndexedDB (too big for localStorage); links are stored on the memo
+const audioDB = (() => {
+  let dbp = null;
+  const open = () => dbp ||= new Promise((res, rej) => {
+    const r = indexedDB.open('my-records', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('audio');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  const run = async (mode, fn) => {
+    const db = await open();
+    return new Promise((res, rej) => { const t = db.transaction('audio', mode), q = fn(t.objectStore('audio')); t.oncomplete = () => res(q.result); t.onerror = t.onabort = () => rej(t.error); });
+  };
+  return { put: (k, v) => run('readwrite', st => st.put(v, k)), get: k => run('readonly', st => st.get(k)), del: k => run('readwrite', st => st.delete(k)) };
+})();
+function linkInfo(url) {
+  let u; try { u = new URL(url); } catch { return null; }
+  if (!/^https?:$/.test(u.protocol)) return null;
+  const h = u.hostname.replace(/^(www|m)\./, '');
+  if (h === 'youtu.be' || /(^|\.)youtube\.com$/.test(h)) {
+    const id = h === 'youtu.be' ? u.pathname.slice(1) : u.searchParams.get('v') || u.pathname.split('/').filter(Boolean).pop();
+    return { kind: 'youtube', id, service: 'YouTube' };
+  }
+  const svc = [[/spotify\.com$/, 'Spotify'], [/soundcloud\.com$/, 'SoundCloud'], [/music\.apple\.com$/, 'Apple Music'], [/melon\.com$/, 'Melon'], [/genie\.co\.kr$/, 'Genie'], [/bugs\.co\.kr$/, 'Bugs'], [/vibe\.naver\.com$/, 'VIBE']].find(([re]) => re.test(h));
+  if (svc) return { kind: 'web', service: svc[1] };
+  return { kind: 'audio', service: /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac|webm)$/i.test(u.pathname) ? '오디오 링크' : '링크' };
+}
+// YouTube can be embedded on the web app and the desktop app, not inside the artifact preview
+const canEmbed = location.protocol === 'app:' || /(^|\.)github\.io$|^localhost$|^127\./.test(location.hostname);
+const audio = new Audio(); audio.preload = 'auto';
+const player = $('player'), plToggle = $('pl-toggle'), plSeek = $('pl-seek'), plOpen = $('pl-open'), plSub = $('pl-sub');
+let np = null; // now playing: { id, title, kind, url, objectUrl, frame, ytPlaying, sub }
+const isPlaying = () => !!np && (np.kind === 'youtube' ? np.ytPlaying : !audio.paused);
+function syncPlayer() {
+  player.hidden = !np;
+  if (!np) return;
+  const on = isPlaying();
+  player.classList.toggle('playing', on);
+  $('pl-title').textContent = np.title;
+  plSub.textContent = np.sub;
+  const canToggle = np.kind === 'audio' || (np.kind === 'youtube' && np.frame);
+  plToggle.hidden = !canToggle;
+  plToggle.textContent = on ? '❚❚' : '▶'; plToggle.setAttribute('aria-label', on ? '일시정지' : '재생');
+  plSeek.hidden = np.kind !== 'audio';
+  plOpen.hidden = !np.url; if (np.url) plOpen.href = np.url;
+  $('pl-disc').hidden = !!np.frame;
+  player.style.setProperty('--lbl', PALS[np.pal % PALS.length].a);
+}
+function stopMusic() {
+  audio.pause(); audio.removeAttribute('src'); audio.load();
+  if (np?.objectUrl) URL.revokeObjectURL(np.objectUrl);
+  np?.frame?.remove();
+  np = null; syncPlayer();
+}
+async function playMemo(m) {
+  if (!m?.music) return;
+  if (np && np.id === m.id) { if (!isPlaying()) togglePlay(); return; }
+  stopMusic();
+  const mu = m.music, info = mu.type === 'url' ? linkInfo(mu.url) : null;
+  np = { id: m.id, pal: m.pal, title: m.title || '제목 없음', kind: mu.type === 'file' ? 'audio' : info?.kind || 'web', url: mu.type === 'url' ? mu.url : null, sub: mu.type === 'file' ? mu.name : info?.service || '링크' };
+  const me = np;
+  if (mu.type === 'file') {
+    const blob = await audioDB.get(m.id).catch(() => null);
+    if (np !== me) return;
+    if (!blob) { np.kind = 'none'; np.sub = '저장된 음악 파일이 없어요. 편집에서 다시 등록해주세요.'; return syncPlayer(); }
+    np.objectUrl = URL.createObjectURL(blob); audio.src = np.objectUrl;
+    audio.play().catch(() => syncPlayer());
+  } else if (np.kind === 'audio') {
+    audio.src = mu.url; audio.play().catch(() => syncPlayer());
+  } else if (np.kind === 'youtube' && canEmbed && info.id) {
+    const f = document.createElement('iframe');
+    f.className = 'yt'; f.title = 'YouTube 플레이어'; f.allow = 'autoplay; encrypted-media';
+    f.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(info.id)}?autoplay=1&enablejsapi=1&playsinline=1&rel=0`;
+    player.insertBefore(f, player.querySelector('.meta'));
+    np.frame = f; np.ytPlaying = true; np.sub = 'YouTube';
+  } else {
+    np.kind = 'web'; np.sub = `${np.sub}에서 듣기 · ↗ 눌러 열기`;
+  }
+  syncPlayer();
+}
+function togglePlay(m) {
+  if (m && (!np || np.id !== m.id)) return playMemo(m);
+  if (!np) return;
+  if (np.kind === 'youtube' && np.frame) {
+    np.frame.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: np.ytPlaying ? 'pauseVideo' : 'playVideo', args: [] }), '*');
+    np.ytPlaying = !np.ytPlaying;
+  } else if (np.kind === 'audio') { audio.paused ? audio.play().catch(() => {}) : audio.pause(); }
+  syncPlayer();
+}
+audio.addEventListener('play', syncPlayer); audio.addEventListener('pause', syncPlayer);
+audio.addEventListener('ended', syncPlayer);
+audio.addEventListener('timeupdate', () => { if (audio.duration) plSeek.value = Math.round(audio.currentTime / audio.duration * 1000); });
+audio.addEventListener('error', () => {
+  if (!np || np.kind !== 'audio' || !audio.getAttribute('src')) return;
+  if (np.url) { np.kind = 'web'; np.sub = '여기서 바로 재생할 수 없는 링크예요 · ↗ 눌러 열기'; }
+  else { np.kind = 'none'; np.sub = '이 파일 형식은 재생할 수 없어요 (mp3 · m4a 권장)'; }
+  syncPlayer();
+});
+plSeek.addEventListener('input', () => { if (audio.duration) audio.currentTime = plSeek.value / 1000 * audio.duration; });
+plToggle.onclick = () => togglePlay();
+$('pl-stop').onclick = stopMusic;
 
 /* ---------- editor ---------- */
 const scrim = $('scrim'), form = $('sheet'), fTitle = $('f-title'), fBody = $('f-body'), fDel = $('f-del');
@@ -835,24 +1028,58 @@ async function takePhoto(file) {
 fFile.addEventListener('change', () => { takePhoto(fFile.files[0]); fFile.value = ''; });
 $('f-filebtn').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fFile.click(); } });
 fNoImg.onclick = () => { draft.img = null; syncPick(); };
+const fLink = $('f-link'), fAudio = $('f-audio'), fNoMusic = $('f-nomusic');
+function syncMusic() {
+  const mu = draft.music;
+  $('f-music').textContent = !mu ? '' : mu.type === 'file' ? `♪ ${mu.name}` : `↗ ${linkInfo(mu.url)?.service || '링크'}`;
+  fNoMusic.hidden = !mu;
+  $('f-audiobtn').textContent = mu?.type === 'file' ? '파일 바꾸기' : '음악 파일';
+  if (document.activeElement !== fLink) fLink.value = mu?.type === 'url' ? mu.url : '';
+}
+function takeAudio(file) {
+  if (!file) return;
+  if (!file.type.startsWith('audio/') && !/\.(mp3|m4a|aac|wav|ogg|oga|opus|flac)$/i.test(file.name)) { fMsg.textContent = '음악 파일(mp3, m4a, wav 등)만 등록할 수 있어요.'; return; }
+  if (file.size > 80 * 1024 * 1024) { fMsg.textContent = '80MB보다 큰 파일은 등록할 수 없어요.'; return; }
+  fMsg.textContent = '';
+  draft.audioBlob = file; draft.music = { type: 'file', name: file.name.replace(/\.[^.]+$/, '') };
+  syncMusic(); drawPreview();
+}
+fAudio.addEventListener('change', () => { takeAudio(fAudio.files[0]); fAudio.value = ''; });
+$('f-audiobtn').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fAudio.click(); } });
+fLink.addEventListener('change', () => {
+  const v = fLink.value.trim();
+  if (!v) { if (draft.music?.type === 'url') draft.music = null; }
+  else if (!linkInfo(v)) { fMsg.textContent = '링크 주소를 확인해주세요. https:// 로 시작해야 해요.'; return; }
+  else { draft.music = { type: 'url', url: v }; draft.audioBlob = null; fMsg.textContent = ''; }
+  syncMusic(); drawPreview();
+});
+fNoMusic.onclick = () => { draft.music = null; draft.audioBlob = null; fLink.value = ''; syncMusic(); drawPreview(); };
 $('f-reroll').onclick = () => { draft.seed = 1 + Math.floor(Math.random() * 1e6); drawPreview(); };
 form.addEventListener('dragover', e => e.preventDefault());
-form.addEventListener('drop', e => { e.preventDefault(); const f = [...(e.dataTransfer?.files || [])].find(f => f.type.startsWith('image/')); if (f) takePhoto(f); });
+form.addEventListener('drop', e => {
+  e.preventDefault();
+  const fs = [...(e.dataTransfer?.files || [])];
+  const img = fs.find(f => f.type.startsWith('image/')), snd = fs.find(f => f.type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg|flac|aac)$/i.test(f.name));
+  if (img) takePhoto(img); if (snd) takeAudio(snd);
+});
 form.addEventListener('paste', e => { const f = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/')); if (f) { e.preventDefault(); takePhoto(f); } });
 function openEditor(i, isNew = false) {
   const m = memos[i]; if (!m) return;
-  editIdx = i; editNew = isNew; draft = { pal: m.pal, pat: m.pat, img: m.img || null, fx: m.fx || 0, seed: m.seed || 0 }; delArmed = false; fMsg.textContent = '';
+  editIdx = i; editNew = isNew; draft = { pal: m.pal, pat: m.pat, img: m.img || null, fx: m.fx || 0, seed: m.seed || 0, music: m.music ? { ...m.music } : null, audioBlob: null }; delArmed = false; fMsg.textContent = '';
   fDel.textContent = '삭제'; $('f-head').textContent = isNew ? '새 메모' : '메모 편집'; $('f-date').textContent = fmtDate(m.t);
-  fTitle.value = m.title; fBody.value = m.body; syncPick();
+  fTitle.value = m.title; fBody.value = m.body; fLink.value = ''; syncPick(); syncMusic();
   scrim.hidden = false; requestAnimationFrame(() => scrim.classList.add('on'));
   setTimeout(() => (isNew ? fTitle : fBody).focus({ preventScroll: true }), 60);
 }
 function closeEditor() {
   scrim.classList.remove('on'); setTimeout(() => (scrim.hidden = true), 250);
-  if (editNew) { const m = memos[editIdx]; if (m && !m.title && !m.body && !m.img) removeMemo(editIdx); }
+  if (editNew) { const m = memos[editIdx]; if (m && !m.title && !m.body && !m.img && !m.music) removeMemo(editIdx); }
   editIdx = -1; editNew = false;
 }
 async function removeMemo(i) {
+  const gone = memos[i];
+  if (gone && np?.id === gone.id) stopMusic();
+  if (gone?.music?.type === 'file') audioDB.del(gone.id).catch(() => {});
   memos.splice(i, 1); store.save();
   pulled = -1; pullOn = false; pullT = slideT = 0;
   target = pos = clamp(i, 0, Math.max(0, N() - 1));
@@ -862,8 +1089,16 @@ form.addEventListener('submit', async e => {
   e.preventDefault();
   const m = memos[editIdx]; if (!m) return closeEditor();
   const before = { ...m };
-  Object.assign(m, { title: fTitle.value.trim(), body: fBody.value.replace(/\s+$/, ''), pal: draft.pal, pat: draft.pat, img: draft.img, fx: draft.fx, seed: draft.seed });
+  if (document.activeElement === fLink) fLink.dispatchEvent(new Event('change'));
+  if (draft.audioBlob) {
+    try { await audioDB.put(m.id, draft.audioBlob); }
+    catch { fMsg.textContent = '음악 파일을 저장하지 못했어요. 기기 저장 공간을 확인해주세요.'; return; }
+  }
+  Object.assign(m, { title: fTitle.value.trim(), body: fBody.value.replace(/\s+$/, ''), pal: draft.pal, pat: draft.pat, img: draft.img, fx: draft.fx, seed: draft.seed, music: draft.music });
   if (!m.img) delete m.img;
+  if (!m.music) delete m.music;
+  if (before.music?.type === 'file' && m.music?.type !== 'file') audioDB.del(m.id).catch(() => {});
+  if (np?.id === m.id && (draft.audioBlob || JSON.stringify(before.music) !== JSON.stringify(m.music))) stopMusic();
   if (!m.title && m.body) m.title = m.body.split('\n')[0].slice(0, 20);
   if (!store.save()) {
     Object.keys(m).forEach(k => delete m[k]); Object.assign(m, before); store.save();
@@ -871,6 +1106,7 @@ form.addEventListener('submit', async e => {
     return;
   }
   editNew = false; closeEditor(); await rebuild();
+  if (pulled >= 0 && memos[pulled] === m && m.music && np?.id !== m.id) playMemo(m);
 });
 $('f-cancel').onclick = closeEditor;
 scrim.addEventListener('pointerdown', e => { if (e.target === scrim) closeEditor(); });
@@ -899,6 +1135,51 @@ async function newMemo() {
   sc.addEventListener('pointerdown', e => { if (e.target === sc) close(); });
   addEventListener('keydown', e => { if (e.key === 'Escape' && !sc.hidden) close(); });
   $('ins-prompt').onclick = async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice.catch(() => {}); deferred = null; $('ins-here').hidden = true; close(); };
+}
+
+/* ---------- crate list ---------- */
+let pendingPull = null; // memo id to pull out once the crate has flicked to it
+{
+  const sc = $('list-scrim'), ol = $('crate-list'), q = $('list-q');
+  const render = () => {
+    const term = q.value.trim().toLowerCase(), cur = sel();
+    ol.innerHTML = '';
+    memos.forEach((m, i) => {
+      if (term && !`${m.title}\n${m.body}`.toLowerCase().includes(term)) return;
+      const li = document.createElement('li'), b = document.createElement('button');
+      b.type = 'button'; b.className = 'li'; b.setAttribute('aria-current', i === cur);
+      const cv = document.createElement('canvas'); cv.width = cv.height = 96;
+      const tex = cards[i]?.userData.mesh.material[4].map?.image;
+      if (tex) cv.getContext('2d').drawImage(tex, 0, 0, 96, 96);
+      const n = document.createElement('span'); n.className = 'n'; n.textContent = String(i + 1).padStart(2, '0');
+      const t = document.createElement('span'); t.className = 't';
+      const tb = document.createElement('b'); tb.textContent = m.title || '제목 없음';
+      const ts = document.createElement('small'); ts.textContent = `${fmtDate(m.t)} · ${(m.body || '').replace(/\s+/g, ' ').slice(0, 40)}`;
+      t.append(tb, ts);
+      const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = m.music ? '♪' : '';
+      b.append(cv, n, t, tag);
+      b.onclick = () => go(m.id);
+      li.append(b); ol.append(li);
+    });
+    if (!ol.children.length) ol.innerHTML = `<li class="list-empty">${term ? '찾는 메모가 없어요.' : '아직 메모가 없어요.'}</li>`;
+    $('list-title').textContent = `Crate · ${memos.length}`;
+  };
+  const close = () => { sc.classList.remove('on'); setTimeout(() => (sc.hidden = true), 250); };
+  const go = id => {
+    close();
+    if (pulled >= 0 && pullOn) putBack();
+    pendingPull = id;
+  };
+  pill.addEventListener('click', () => {
+    if (!scrim.hidden) return;
+    q.value = ''; render();
+    sc.hidden = false; requestAnimationFrame(() => sc.classList.add('on'));
+    setTimeout(() => ol.querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' }), 30);
+  });
+  q.addEventListener('input', render);
+  $('list-close').onclick = close;
+  sc.addEventListener('pointerdown', e => { if (e.target === sc) close(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !sc.hidden) close(); });
 }
 
 /* ---------- themes ---------- */
@@ -952,9 +1233,15 @@ function frame(now) {
   if (pullOn) { pullT = approach(pullT, 1, dt * 1.9 * sp); if (pullT > .8) slideT = approach(slideT, 1, dt * 2.2 * sp); }
   else { slideT = approach(slideT, 0, dt * 3.2 * sp); if (slideT < .25) pullT = approach(pullT, 0, dt * 2.0 * sp); if (pullT === 0 && slideT === 0 && pulled >= 0) { pulled = -1; dirtyUI = true; } }
 
+  if (pendingPull && pulled < 0) {
+    const i = memos.findIndex(m => m.id === pendingPull);
+    if (i < 0) pendingPull = null;
+    else { target = i; if (Math.abs(pos - i) < .06) { pendingPull = null; pullOut(); } }
+  }
   cards.forEach((g, i) => {
     cratePose(i, P, Q);
-    const { paper } = g.userData;
+    const { paper, disc } = g.userData;
+    if (disc && np && np.id === g.userData.memo.id && isPlaying()) disc.rotation.z -= dt * 3.5;
     if (i === pulled && pullT > 0) {
       const se = ease(slideT);
       displayPose(P2, Q2, se);
@@ -965,8 +1252,9 @@ function frame(now) {
       setLayer(g, pullT > .3 ? TOP : 0);
       if (portrait) paper.position.set(0, -.92 * se, -.011); else paper.position.set(.92 * se, 0, -.011);
       paper.rotation.z = (portrait ? -1 : 1) * Math.sin(Math.PI * se) * .04;
+      if (disc) { disc.visible = true; disc.position.y = .5 + (portrait ? .24 : .42) * se; }
     } else {
-      g.position.copy(P); g.quaternion.copy(Q); paper.visible = false; setLayer(g, 0);
+      g.position.copy(P); g.quaternion.copy(Q); paper.visible = false; if (disc) disc.visible = false; setLayer(g, 0);
     }
   });
 
