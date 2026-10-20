@@ -670,7 +670,18 @@ function pick(e) {
   return ray.intersectObjects(objs, false)[0]?.object.userData;
 }
 function pullOut() { if (!N()) return; pulled = sel(); target = pulled; ensurePaper(pulled); pullOn = true; dirtyUI = true; }
-function putBack() { pullOn = false; dirtyUI = true; }
+// a memo you just read goes back in at the front of the crate, like a record you just played
+function bringToFront(i) {
+  if (i <= 0 || i >= memos.length) return;
+  memos.unshift(memos.splice(i, 1)[0]);
+  cards.unshift(cards.splice(i, 1)[0]);
+  cards.forEach((g, j) => { g.userData.mesh.userData.i = j; g.userData.paper.userData.i = j; });
+  store.save();
+}
+function putBack() {
+  if (pulled > 0) { bringToFront(pulled); pulled = 0; }
+  target = 0; pullOn = false; dirtyUI = true;
+}
 
 /* camera view: yaw around the crate, pitch above the floor, zoom as a distance factor */
 const VIEW0 = { yaw: 0, pitch: EL, zoom: 1 };
