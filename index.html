@@ -100,6 +100,15 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
 .sheet footer { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .sheet footer div { display: flex; gap: 8px; }
 .del { font: 500 14px var(--f-body); background: transparent; border: 0; color: var(--danger); cursor: pointer; padding: 10px 4px; }
+.install-link { font: 500 11px var(--f-body); color: var(--ink); background: var(--chip); border: 1px solid var(--chip-line); border-radius: 999px; padding: 4px 10px; cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.install-link:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.ins { display: grid; gap: 14px; }
+.ins h2 { margin: 0; font: 700 22px var(--f-serif); }
+.ins section { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--sheet-line); }
+.ins h3 { margin: 0; font-family: var(--f-mono); font-size: 11px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); }
+.ins p { margin: 0; font-size: 14px; line-height: 1.6; }
+.ins a.btn { justify-self: start; text-decoration: none; }
+.ins code { font-family: var(--f-mono); font-size: 12px; background: var(--chip); padding: 2px 6px; border-radius: 4px; word-break: break-all; }
 .loading { position: fixed; inset: 0; display: grid; place-items: center; font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; color: var(--ink-soft); }
 @media (prefers-reduced-motion: reduce) { .scrim, .sheet, body { transition: none; } }
 </style>
@@ -114,6 +123,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
   <div class="themes">
     <div class="swatches" id="swatches" role="group" aria-label="장면 테마"></div>
     <span id="theme-name">Daylight</span>
+    <button type="button" class="install-link" id="install-open" hidden>앱으로 설치</button>
   </div>
   <div class="pill" id="pill">—</div>
 </div>
@@ -121,6 +131,30 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
 <div class="hud bottom">
   <div class="hint" id="hint">위아래로 드래그해서 넘기기 · 탭해서 꺼내기</div>
   <div class="actions" id="actions"></div>
+</div>
+
+<div class="scrim" id="ins-scrim" hidden>
+  <div class="sheet ins" role="dialog" aria-modal="true" aria-labelledby="ins-title">
+    <header><b>Install</b><button type="button" class="btn ghost" id="ins-close">닫기</button></header>
+    <h2 id="ins-title">Memo Crate 앱 설치</h2>
+    <section id="ins-here" hidden>
+      <h3>이 기기</h3>
+      <p>브라우저가 바로 설치를 지원해요.</p>
+      <button type="button" class="btn" id="ins-prompt">지금 설치</button>
+    </section>
+    <section>
+      <h3>휴대폰 · iPhone / Android</h3>
+      <p>휴대폰에서 아래 주소를 열고, iPhone은 <b>공유 → 홈 화면에 추가</b>, Android는 <b>메뉴 → 앱 설치</b>를 누르세요. 설치 후에는 오프라인에서도 열려요.</p>
+      <p><code>adwoon.github.io/memo-crate</code></p>
+      <a class="btn ghost" href="https://adwoon.github.io/memo-crate/" target="_blank" rel="noopener">웹 앱 열기</a>
+    </section>
+    <section>
+      <h3>Windows PC</h3>
+      <p>설치 파일(Memo Crate Setup .exe)을 받아 실행하세요. 처음 실행할 때 Windows가 "알 수 없는 게시자" 경고를 띄우면 <b>추가 정보 → 실행</b>을 누르면 돼요.</p>
+      <a class="btn" href="https://github.com/adwoon/memo-crate/releases/latest" target="_blank" rel="noopener">Windows용 다운로드</a>
+    </section>
+    <p style="font-size:12px;color:var(--ink-soft)">메모는 설치한 기기 안에만 저장돼요. 이 페이지에 쓴 메모가 앱으로 옮겨지지는 않아요.</p>
+  </div>
 </div>
 
 <div class="scrim" id="scrim" hidden>
@@ -579,6 +613,7 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 addEventListener('keydown', e => {
   if (!scrim.hidden) { if (e.key === 'Escape') closeEditor(); return; }
+  if (!$('ins-scrim').hidden) return;
   if (pulled < 0 && (e.key === 'ArrowDown' || e.key === 'ArrowRight')) target = clamp(Math.round(target) + 1, 0, N() - 1);
   else if (pulled < 0 && (e.key === 'ArrowUp' || e.key === 'ArrowLeft')) target = clamp(Math.round(target) - 1, 0, N() - 1);
   else if (e.key === 'Enter') { if (pulled < 0) pullOut(); else if (pullOn) openEditor(pulled); }
@@ -691,6 +726,22 @@ async function newMemo() {
   const m = { id: 'm' + Date.now().toString(36), title: '', body: '', pal: Math.floor(Math.random() * PALS.length), pat: Math.floor(Math.random() * PATS.length), t: Date.now() };
   memos.unshift(m); pulled = -1; pullOn = false; pullT = slideT = 0; pos = target = 0;
   await rebuild(); pullOut(); openEditor(0, true);
+}
+
+/* ---------- install ---------- */
+{
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone || location.protocol === 'app:';
+  const open = $('install-open'), sc = $('ins-scrim');
+  let deferred = null;
+  open.hidden = standalone;
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; $('ins-here').hidden = false; });
+  addEventListener('appinstalled', () => { open.hidden = true; deferred = null; });
+  const close = () => { sc.classList.remove('on'); setTimeout(() => (sc.hidden = true), 250); };
+  open.onclick = () => { sc.hidden = false; requestAnimationFrame(() => sc.classList.add('on')); };
+  $('ins-close').onclick = close;
+  sc.addEventListener('pointerdown', e => { if (e.target === sc) close(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !sc.hidden) close(); });
+  $('ins-prompt').onclick = async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice.catch(() => {}); deferred = null; $('ins-here').hidden = true; close(); };
 }
 
 /* ---------- themes ---------- */
