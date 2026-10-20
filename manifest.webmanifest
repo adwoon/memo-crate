@@ -1,6 +1,6 @@
 {
-  "name": "Memo Crate",
-  "short_name": "Memo Crate",
+  "name": "My Records",
+  "short_name": "My Records",
   "description": "레코드 크레이트처럼 넘겨보는 3D 메모앱",
   "lang": "ko",
   "start_url": "./",

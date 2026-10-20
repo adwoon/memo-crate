@@ -7,12 +7,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Memo Crate">
+<meta name="apple-mobile-web-app-title" content="My Records">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
-<title>Memo Crate</title>
+<title>My Records</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -109,17 +109,18 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
 .ins p { margin: 0; font-size: 14px; line-height: 1.6; }
 .ins a.btn { justify-self: start; text-decoration: none; }
 .ins code { font-family: var(--f-mono); font-size: 12px; background: var(--chip); padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+.view-reset { font-size: 12px; padding: 6px 12px; }
 .loading { position: fixed; inset: 0; display: grid; place-items: center; font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; color: var(--ink-soft); }
 @media (prefers-reduced-motion: reduce) { .scrim, .sheet, body { transition: none; } }
 </style>
 
 </head>
 <body>
-<canvas id="c" aria-label="메모 상자 3D 화면"></canvas>
-<div class="loading" id="loading">LOADING CRATE…</div>
+<canvas id="c" aria-label="메모 레코드 상자 3D 화면"></canvas>
+<div class="loading" id="loading">DROPPING THE NEEDLE…</div>
 
 <div class="hud top">
-  <div class="brand"><small>Memo Library</small><h1>Memo Crate</h1></div>
+  <div class="brand"><small>Side A · Memos</small><h1>My Records</h1></div>
   <div class="themes">
     <div class="swatches" id="swatches" role="group" aria-label="장면 테마"></div>
     <span id="theme-name">Daylight</span>
@@ -129,14 +130,15 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
 </div>
 
 <div class="hud bottom">
-  <div class="hint" id="hint">위아래로 드래그해서 넘기기 · 탭해서 꺼내기</div>
+  <button type="button" class="btn ghost view-reset" id="view-reset" hidden>정면으로</button>
+  <div class="hint" id="hint">카드를 위아래로 넘기기 · 배경을 끌어 둘러보기 · 탭해서 꺼내기</div>
   <div class="actions" id="actions"></div>
 </div>
 
 <div class="scrim" id="ins-scrim" hidden>
   <div class="sheet ins" role="dialog" aria-modal="true" aria-labelledby="ins-title">
     <header><b>Install</b><button type="button" class="btn ghost" id="ins-close">닫기</button></header>
-    <h2 id="ins-title">Memo Crate 앱 설치</h2>
+    <h2 id="ins-title">My Records 앱 설치</h2>
     <section id="ins-here" hidden>
       <h3>이 기기</h3>
       <p>브라우저가 바로 설치를 지원해요.</p>
@@ -150,7 +152,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--f-body); ove
     </section>
     <section>
       <h3>Windows PC</h3>
-      <p>설치 파일(Memo Crate Setup .exe)을 받아 실행하세요. 처음 실행할 때 Windows가 "알 수 없는 게시자" 경고를 띄우면 <b>추가 정보 → 실행</b>을 누르면 돼요.</p>
+      <p>설치 파일(My Records Setup .exe)을 받아 실행하세요. 처음 실행할 때 Windows가 "알 수 없는 게시자" 경고를 띄우면 <b>추가 정보 → 실행</b>을 누르면 돼요.</p>
       <a class="btn" href="https://github.com/adwoon/memo-crate/releases/latest" target="_blank" rel="noopener">Windows용 다운로드</a>
     </section>
     <p style="font-size:12px;color:var(--ink-soft)">메모는 설치한 기기 안에만 저장돼요. 이 페이지에 쓴 메모가 앱으로 옮겨지지는 않아요.</p>
@@ -371,7 +373,7 @@ function drawCover(m) {
 function drawBack(m) {
   const S = 256, [c, x] = cnv(S), p = PALS[m.pal % PALS.length];
   x.fillStyle = p.bg; x.fillRect(0, 0, S, S); x.globalAlpha = .5; x.fillStyle = p.a; x.fillRect(18, 18, 60, 8);
-  x.font = '500 11px "IBM Plex Mono", monospace'; x.fillStyle = p.ink; x.fillText('MEMO CRATE · ' + fmtDate(m.t), 18, 236);
+  x.font = '500 11px "IBM Plex Mono", monospace'; x.fillStyle = p.ink; x.fillText('MY RECORDS · ' + fmtDate(m.t), 18, 236);
   x.globalAlpha = 1; grain(x, S, .05); return c;
 }
 function fit(x, t, max) {
@@ -462,11 +464,11 @@ const lamp = new THREE.PointLight('#ffb466', 0, 6, 1.6); lamp.position.set(-1.4,
 [hemi, spot, lamp].forEach(l => l.layers.enable(TOP));
 
 const floorMat = new THREE.MeshStandardMaterial({ map: texOf(woodCanvas('#e3bf8c', 512, 6), 1), roughness: .75 });
-floorMat.map.repeat.set(8, 8);
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+floorMat.map.repeat.set(20, 20);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
 const wallMat = new THREE.MeshStandardMaterial({ color: '#ece3d3', roughness: .95 });
-const wall = new THREE.Mesh(new THREE.PlaneGeometry(16, 8), wallMat); wall.position.set(0, 4, -2.6); wall.receiveShadow = true; scene.add(wall);
-const base = new THREE.Mesh(new THREE.BoxGeometry(16, .12, .03), new THREE.MeshStandardMaterial({ color: '#f5efe4', roughness: .8 })); base.position.set(0, .06, -2.585); base.receiveShadow = true; scene.add(base);
+const wall = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), wallMat); wall.position.set(0, 6, -2.6); wall.receiveShadow = true; scene.add(wall);
+const base = new THREE.Mesh(new THREE.BoxGeometry(40, .12, .03), new THREE.MeshStandardMaterial({ color: '#f5efe4', roughness: .8 })); base.position.set(0, .06, -2.585); base.receiveShadow = true; scene.add(base);
 
 /* crate */
 const crateMat = new THREE.MeshStandardMaterial({ map: texOf(woodCanvas('#b37a46')), roughness: .7 });
@@ -570,32 +572,72 @@ function pick(e) {
 function pullOut() { if (!N()) return; pulled = sel(); target = pulled; ensurePaper(pulled); pullOn = true; dirtyUI = true; }
 function putBack() { pullOn = false; dirtyUI = true; }
 
-let drag = null;
+/* camera view: yaw around the crate, pitch above the floor, zoom as a distance factor */
+const VIEW0 = { yaw: 0, pitch: EL, zoom: 1 };
+const view = { ...VIEW0 }, viewT = { ...VIEW0 };
+const PITCH = [.1, 1.38], YAW = 1.35, ZOOM = [.55, 1.45];
+const setView = (yaw, pitch, zoom) => {
+  viewT.yaw = clamp(yaw, -YAW, YAW); viewT.pitch = clamp(pitch, PITCH[0], PITCH[1]); viewT.zoom = clamp(zoom, ZOOM[0], ZOOM[1]);
+};
+const resetView = () => setView(VIEW0.yaw, VIEW0.pitch, VIEW0.zoom);
+const viewMoved = () => Math.abs(viewT.yaw) > .04 || Math.abs(viewT.pitch - EL) > .04 || Math.abs(viewT.zoom - 1) > .04;
+document.getElementById('view-reset').onclick = resetView;
+
+const pointers = new Map();
+let drag = null, lastBgTap = 0;
+const pinchDist = () => { const [p, q] = [...pointers.values()]; return Math.hypot(p.x - q.x, p.y - q.y); };
 canvas.addEventListener('pointerdown', e => {
   if (!scrim.hidden) return;
-  drag = { x: e.clientX, y: e.clientY, t: performance.now(), start: target, ly: e.clientY, lt: performance.now(), vel: 0, moved: false };
-  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  try { canvas.setPointerCapture(e.pointerId); } catch {}
+  if (pointers.size === 2) { drag = { mode: 'pinch', d0: pinchDist(), z0: viewT.zoom, moved: true }; return; }
+  if (pointers.size > 2) return;
+  const hit = pick(e);
+  const onCard = pulled >= 0 ? hit && hit.i === pulled : !!hit;
+  drag = {
+    mode: onCard ? (pulled >= 0 ? 'swipe' : 'flick') : 'orbit',
+    x: e.clientX, y: e.clientY, t: performance.now(), start: target, ly: e.clientY, lt: performance.now(), vel: 0, moved: false,
+    yaw0: viewT.yaw, pitch0: viewT.pitch, vx: 0, vy: 0, lx: e.clientX,
+  };
 });
 canvas.addEventListener('pointermove', e => {
-  if (e.pointerType === 'mouse') swayT.set(e.clientX / innerWidth - .5, e.clientY / innerHeight - .5);
+  if (e.pointerType === 'mouse' && !drag) swayT.set(e.clientX / innerWidth - .5, e.clientY / innerHeight - .5);
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (!drag) return;
+  if (drag.mode === 'pinch') { if (pointers.size === 2) setView(viewT.yaw, viewT.pitch, drag.z0 * drag.d0 / Math.max(20, pinchDist())); return; }
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.hypot(dx, dy) > 7) drag.moved = true;
-  if (drag.moved && !pullOn && pulled < 0) {
+  if (!drag.moved) return;
+  const now = performance.now(), dt = Math.max(1, now - drag.lt) / 1000;
+  if (drag.mode === 'flick' && !pullOn && pulled < 0) {
     target = clamp(drag.start + dy / 64, 0, Math.max(0, N() - 1));
-    const now = performance.now(), dt = Math.max(1, now - drag.lt);
-    drag.vel = drag.vel * .6 + ((e.clientY - drag.ly) / 64 / (dt / 1000)) * .4; drag.ly = e.clientY; drag.lt = now;
+    drag.vel = drag.vel * .6 + ((e.clientY - drag.ly) / 64 / dt) * .4;
+  } else if (drag.mode === 'orbit') {
+    const k = 3.2 / Math.max(innerWidth, innerHeight);
+    setView(drag.yaw0 - dx * k * 1.4, drag.pitch0 + dy * k, viewT.zoom);
+    drag.vx = drag.vx * .6 + (-(e.clientX - drag.lx) * k * 1.4 / dt) * .4;
+    drag.vy = drag.vy * .6 + ((e.clientY - drag.ly) * k / dt) * .4;
   }
+  drag.ly = e.clientY; drag.lx = e.clientX; drag.lt = now;
 });
 const endDrag = e => {
+  pointers.delete(e.pointerId);
   if (!drag) return;
+  if (drag.mode === 'pinch') { if (pointers.size === 0) drag = null; return; }
   const d = drag; drag = null;
-  if (!d.moved && performance.now() - d.t < 600) return onTap(e);
-  if (pulled >= 0) { if (Math.abs(e.clientY - d.y) > 50) putBack(); return; }
-  target = clamp(Math.round(target + clamp(d.vel, -25, 25) * .12), 0, Math.max(0, N() - 1));
+  if (!d.moved && performance.now() - d.t < 600) {
+    if (d.mode === 'orbit' && pulled < 0) {
+      const now = performance.now();
+      if (now - lastBgTap < 320) { resetView(); lastBgTap = 0; } else lastBgTap = now;
+    }
+    return onTap(e);
+  }
+  if (d.mode === 'orbit') { setView(viewT.yaw + clamp(d.vx, -6, 6) * .12, viewT.pitch + clamp(d.vy, -4, 4) * .1, viewT.zoom); return; }
+  if (d.mode === 'swipe') { if (Math.abs(e.clientY - d.y) > 50) putBack(); return; }
+  if (pulled < 0) target = clamp(Math.round(target + clamp(d.vel, -25, 25) * .12), 0, Math.max(0, N() - 1));
 };
 canvas.addEventListener('pointerup', endDrag);
-canvas.addEventListener('pointercancel', () => { drag = null; target = Math.round(target); });
+canvas.addEventListener('pointercancel', e => { pointers.delete(e.pointerId); drag = null; target = Math.round(target); });
 function onTap(e) {
   const hit = pick(e);
   if (pulled >= 0) {
@@ -608,7 +650,9 @@ function onTap(e) {
 }
 let wheelAcc = 0;
 canvas.addEventListener('wheel', e => {
-  e.preventDefault(); if (pulled >= 0) return;
+  e.preventDefault();
+  // pinch on a trackpad (ctrl) or wheel over the background zooms; wheel over a card flicks
+  if (e.ctrlKey || pulled >= 0 || !pick(e)) { setView(viewT.yaw, viewT.pitch, viewT.zoom * Math.exp(e.deltaY * .0015)); return; }
   wheelAcc += e.deltaY; if (Math.abs(wheelAcc) > 50) { target = clamp(Math.round(target) + Math.sign(wheelAcc), 0, Math.max(0, N() - 1)); wheelAcc = 0; }
 }, { passive: false });
 addEventListener('keydown', e => {
@@ -618,6 +662,7 @@ addEventListener('keydown', e => {
   else if (pulled < 0 && (e.key === 'ArrowUp' || e.key === 'ArrowLeft')) target = clamp(Math.round(target) - 1, 0, N() - 1);
   else if (e.key === 'Enter') { if (pulled < 0) pullOut(); else if (pullOn) openEditor(pulled); }
   else if (e.key === 'Escape' && pulled >= 0) putBack();
+  else if (e.key === '0') resetView();
   else if (e.key.toLowerCase() === 'n') newMemo();
 });
 
@@ -635,7 +680,7 @@ function updateUI() {
   if (mode === lastUI) return; lastUI = mode;
   hint.textContent = mode === 'empty' ? '첫 메모를 상자에 넣어보세요'
     : mode === 'out' ? '종이를 탭하면 편집 · 바깥을 탭하면 다시 넣기'
-    : '위아래로 드래그해서 넘기기 · 탭해서 꺼내기';
+    : '카드를 위아래로 넘기기 · 배경을 끌어 둘러보기 · 탭해서 꺼내기';
   actions.innerHTML = '';
   const add = (label, fn, ghost) => { const b = document.createElement('button'); b.className = 'btn' + (ghost ? ' ghost' : ''); b.type = 'button'; b.textContent = label; b.onclick = fn; actions.append(b); };
   if (mode === 'out') { add('편집', () => openEditor(pulled), true); add('다시 넣기', putBack); }
@@ -783,8 +828,11 @@ function frame(now) {
 
   // camera with soft parallax
   sway.lerp(swayT, 1 - Math.exp(-dt * 3));
-  const d = camDist;
-  camera.position.set(LOOK.x + sway.x * .35, LOOK.y + Math.sin(EL) * d - sway.y * .2, LOOK.z + Math.cos(EL) * d);
+  const kv = reduce ? 1 : 1 - Math.exp(-dt * 7);
+  view.yaw += (viewT.yaw - view.yaw) * kv; view.pitch += (viewT.pitch - view.pitch) * kv; view.zoom += (viewT.zoom - view.zoom) * kv;
+  const d = camDist * view.zoom, cp = Math.cos(view.pitch);
+  camera.position.set(LOOK.x + Math.sin(view.yaw) * cp * d + sway.x * .35, LOOK.y + Math.sin(view.pitch) * d - sway.y * .2, LOOK.z + Math.cos(view.yaw) * cp * d);
+  const vr = $('view-reset'), vm = viewMoved(); if (vr.hidden === vm) vr.hidden = !vm;
   camera.lookAt(LOOK); camera.updateMatrixWorld();
 
   // pull state machine

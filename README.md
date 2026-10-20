@@ -1,4 +1,4 @@
-# Memo Crate
+# My Records
 
 레코드 크레이트처럼 메모를 넘겨보는 3D 메모앱 (three.js).
 
