@@ -276,6 +276,7 @@ const store = {
   save() { try { localStorage.setItem(KEY, JSON.stringify(memos)); return true; } catch { return false; } },
 };
 let memos = store.load() || SAMPLE;
+memos = [...memos.filter(m => m.pinned), ...memos.filter(m => !m.pinned)];
 
 const fmtDate = t => { const d = new Date(t); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`; };
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -667,6 +668,18 @@ box(1.24, .40, .045, 0, .20, -.66);          // back
 
 /* cards */
 const cardGeo = new THREE.BoxGeometry(1, 1, .014); cardGeo.translate(0, .5, 0);
+const tabGeo = new THREE.BoxGeometry(.24, .085, .016); tabGeo.translate(-.34, 1.04, 0);
+let tabTex = null;
+function tabMaterial() {
+  if (!tabTex) {
+    const [c, x] = cnv(256, 96);
+    x.fillStyle = '#d23b2a'; x.fillRect(0, 0, 256, 96);
+    x.fillStyle = '#fbf3e4'; x.font = '700 46px "Noto Sans KR", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText('고정', 128, 52);
+    tabTex = texOf(c);
+  }
+  return new THREE.MeshStandardMaterial({ map: tabTex, roughness: .6 });
+}
 const discGeo = new THREE.CylinderGeometry(.47, .47, .004, 72); discGeo.rotateX(Math.PI / 2);
 const paperGeo = new THREE.PlaneGeometry(.94, .94); paperGeo.translate(0, .5, 0);
 let cards = [];
@@ -674,7 +687,8 @@ function disposeCard(g) {
   const { mesh, paper } = g.userData;
   for (const m of new Set(mesh.material)) { m.map?.dispose(); m.dispose(); }
   paper.material.map?.dispose(); paper.material.dispose();
-  const { disc } = g.userData; if (disc) { disc.material.map?.dispose(); disc.material.dispose(); }
+  const { disc, tab } = g.userData; if (disc) { disc.material.map?.dispose(); disc.material.dispose(); }
+  tab.material.dispose();
   scene.remove(g);
 }
 function makeCard(m, i) {
@@ -693,10 +707,11 @@ function makeCard(m, i) {
     disc.position.set(0, .5, -.018); disc.visible = false; disc.castShadow = true; disc.userData = { i, kind: 'disc' };
     g.add(disc);
   }
-  g.add(mesh, paper); g.userData = { mesh, paper, disc, memo: m };
+  const tab = new THREE.Mesh(tabGeo, tabMaterial()); tab.visible = !!m.pinned; tab.castShadow = true;
+  g.add(mesh, paper, tab); g.userData = { mesh, paper, disc, tab, memo: m };
   scene.add(g); return g;
 }
-function setLayer(g, l) { const { mesh, paper, disc } = g.userData; if (mesh.layers.mask !== 1 << l) { mesh.layers.set(l); paper.layers.set(l); disc?.layers.set(l); } }
+function setLayer(g, l) { const { mesh, paper, disc, tab } = g.userData; if (mesh.layers.mask !== 1 << l) { mesh.layers.set(l); paper.layers.set(l); tab.layers.set(l); disc?.layers.set(l); } }
 function ensurePaper(i) { const p = cards[i]?.userData.paper; if (p && !p.material.map) { p.material.map = texOf(drawPaper(memos[i])); p.material.needsUpdate = true; } }
 async function rebuild() {
   await Promise.all([ensureFonts(memos.map(m => m.title + m.body).join('')), ...memos.map(m => loadImg(m.img))]);
@@ -760,16 +775,31 @@ function pick(e) {
 }
 function pullOut() { if (!N()) return; pulled = sel(); target = pulled; ensurePaper(pulled); pullOn = true; dirtyUI = true; if (memos[pulled].music) playMemo(memos[pulled]); }
 // a memo you just read goes back in at the front of the crate, like a record you just played
-function bringToFront(i) {
-  if (i <= 0 || i >= memos.length) return;
-  memos.unshift(memos.splice(i, 1)[0]);
-  cards.unshift(cards.splice(i, 1)[0]);
+// pinned memos stay at the very front; everything else queues up right behind them
+const pinCount = () => memos.reduce((n, m) => n + (m.pinned ? 1 : 0), 0);
+function moveMemo(from, to) {
+  if (from === to || from < 0 || from >= memos.length) return from;
+  memos.splice(to, 0, memos.splice(from, 1)[0]);
+  cards.splice(to, 0, cards.splice(from, 1)[0]);
   cards.forEach((g, j) => { g.userData.mesh.userData.i = j; g.userData.paper.userData.i = j; if (g.userData.disc) g.userData.disc.userData.i = j; });
   store.save();
+  return to;
 }
+const bringToFront = i => moveMemo(i, memos[i]?.pinned ? 0 : pinCount());
 function putBack() {
-  if (pulled > 0) { bringToFront(pulled); pulled = 0; }
+  if (pulled >= 0) pulled = bringToFront(pulled);
   target = 0; pullOn = false; dirtyUI = true;
+}
+function togglePin(i) {
+  const m = memos[i]; if (!m) return i;
+  m.pinned = !m.pinned; if (!m.pinned) delete m.pinned;
+  cards[i].userData.tab.visible = !!m.pinned;
+  const j = moveMemo(i, m.pinned ? 0 : pinCount());
+  store.save();
+  if (pulled === i) pulled = j;
+  target = j; if (pulled < 0) pos = j;
+  dirtyUI = true; lastUI = '';
+  return j;
 }
 
 /* camera view: yaw around the crate, pitch above the floor, zoom as a distance factor */
@@ -864,6 +894,7 @@ addEventListener('keydown', e => {
   else if (e.key === 'Enter') { if (pulled < 0) pullOut(); else if (pullOn) openEditor(pulled); }
   else if (e.key === 'Escape' && pulled >= 0) putBack();
   else if (e.key === '0') resetView();
+  else if ((e.key === 'p' || e.key === 'P') && pulled >= 0 && pullOn) togglePin(pulled);
   else if (e.key === ' ' && np) { e.preventDefault(); togglePlay(); }
   else if (e.key.toLowerCase() === 'n') newMemo();
 });
@@ -871,21 +902,23 @@ addEventListener('keydown', e => {
 /* ---------- HUD ---------- */
 const $ = id => document.getElementById(id);
 const pill = $('pill'), hint = $('hint'), actions = $('actions');
-let lastUI = '';
+var lastUI = '';
 function updateUI() {
-  const n = N(), k = sel(), m = memos[k];
+  const n = N(), k = pulled >= 0 && pulled < n ? pulled : sel(), m = memos[k];
   const mode = n === 0 ? 'empty' : pulled >= 0 ? 'out' : 'in';
   const text = n === 0 ? '0 / 0 · 메모가 없어요'
     : mode === 'out' ? `${m.title || '제목 없음'} · ${fmtDate(m.t)} · ${[...(m.body || '')].length}자`
-    : `${k + 1} / ${n} · ${m.title || '제목 없음'} — ${fmtDate(m.t)}`;
+    : `${k + 1} / ${n} · ${m.pinned ? '고정 · ' : ''}${m.title || '제목 없음'} — ${fmtDate(m.t)}`;
   if (pill.textContent !== text) pill.textContent = text;
-  if (mode === lastUI) return; lastUI = mode;
+  const ui = mode + (m?.pinned ? ':pin' : '');
+  if (ui === lastUI) return; lastUI = ui;
   hint.textContent = mode === 'empty' ? '첫 메모를 상자에 넣어보세요'
     : mode === 'out' ? '종이를 탭하면 편집 · 레코드를 탭하면 재생/정지 · 바깥을 탭하면 넣기'
     : '카드를 위아래로 넘기기 · 배경을 끌어 둘러보기 · 탭해서 꺼내기';
   actions.innerHTML = '';
   const add = (label, fn, ghost) => { const b = document.createElement('button'); b.className = 'btn' + (ghost ? ' ghost' : ''); b.type = 'button'; b.textContent = label; b.onclick = fn; actions.append(b); };
-  if (mode === 'out') { add('편집', () => openEditor(pulled), true); add('다시 넣기', putBack); }
+  const pinLabel = m?.pinned ? '고정 해제' : '맨 앞 고정';
+  if (mode === 'out') { add('편집', () => openEditor(pulled), true); add(pinLabel, () => togglePin(pulled), true); add('다시 넣기', putBack); }
   else { add('+ 새 메모', newMemo, true); if (mode === 'in') add('꺼내기', pullOut); }
 }
 
@@ -1117,8 +1150,9 @@ fDel.onclick = async () => {
 async function newMemo() {
   if (!scrim.hidden) return;
   const m = { id: 'm' + Date.now().toString(36), title: '', body: '', pal: Math.floor(Math.random() * PALS.length), pat: Math.floor(Math.random() * PATS.length), seed: 1 + Math.floor(Math.random() * 1e6), t: Date.now() };
-  memos.unshift(m); pulled = -1; pullOn = false; pullT = slideT = 0; pos = target = 0;
-  await rebuild(); pullOut(); openEditor(0, true);
+  const at = pinCount();
+  memos.splice(at, 0, m); pulled = -1; pullOn = false; pullT = slideT = 0; pos = target = at;
+  await rebuild(); pullOut(); openEditor(at, true);
 }
 
 /* ---------- install ---------- */
@@ -1156,7 +1190,7 @@ let pendingPull = null; // memo id to pull out once the crate has flicked to it
       const tb = document.createElement('b'); tb.textContent = m.title || '제목 없음';
       const ts = document.createElement('small'); ts.textContent = `${fmtDate(m.t)} · ${(m.body || '').replace(/\s+/g, ' ').slice(0, 40)}`;
       t.append(tb, ts);
-      const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = m.music ? '♪' : '';
+      const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = [m.pinned ? '고정' : '', m.music ? '♪' : ''].filter(Boolean).join(' ');
       b.append(cv, n, t, tag);
       b.onclick = () => go(m.id);
       li.append(b); ol.append(li);
