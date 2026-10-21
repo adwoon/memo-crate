@@ -668,18 +668,6 @@ box(1.24, .40, .045, 0, .20, -.66);          // back
 
 /* cards */
 const cardGeo = new THREE.BoxGeometry(1, 1, .014); cardGeo.translate(0, .5, 0);
-const tabGeo = new THREE.BoxGeometry(.24, .085, .016); tabGeo.translate(-.34, 1.04, 0);
-let tabTex = null;
-function tabMaterial() {
-  if (!tabTex) {
-    const [c, x] = cnv(256, 96);
-    x.fillStyle = '#d23b2a'; x.fillRect(0, 0, 256, 96);
-    x.fillStyle = '#fbf3e4'; x.font = '700 46px "Noto Sans KR", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillText('고정', 128, 52);
-    tabTex = texOf(c);
-  }
-  return new THREE.MeshStandardMaterial({ map: tabTex, roughness: .6 });
-}
 const discGeo = new THREE.CylinderGeometry(.47, .47, .004, 72); discGeo.rotateX(Math.PI / 2);
 const paperGeo = new THREE.PlaneGeometry(.94, .94); paperGeo.translate(0, .5, 0);
 let cards = [];
@@ -687,8 +675,7 @@ function disposeCard(g) {
   const { mesh, paper } = g.userData;
   for (const m of new Set(mesh.material)) { m.map?.dispose(); m.dispose(); }
   paper.material.map?.dispose(); paper.material.dispose();
-  const { disc, tab } = g.userData; if (disc) { disc.material.map?.dispose(); disc.material.dispose(); }
-  tab.material.dispose();
+  const { disc } = g.userData; if (disc) { disc.material.map?.dispose(); disc.material.dispose(); }
   scene.remove(g);
 }
 function makeCard(m, i) {
@@ -707,11 +694,10 @@ function makeCard(m, i) {
     disc.position.set(0, .5, -.018); disc.visible = false; disc.castShadow = true; disc.userData = { i, kind: 'disc' };
     g.add(disc);
   }
-  const tab = new THREE.Mesh(tabGeo, tabMaterial()); tab.visible = !!m.pinned; tab.castShadow = true;
-  g.add(mesh, paper, tab); g.userData = { mesh, paper, disc, tab, memo: m };
+  g.add(mesh, paper); g.userData = { mesh, paper, disc, memo: m };
   scene.add(g); return g;
 }
-function setLayer(g, l) { const { mesh, paper, disc, tab } = g.userData; if (mesh.layers.mask !== 1 << l) { mesh.layers.set(l); paper.layers.set(l); tab.layers.set(l); disc?.layers.set(l); } }
+function setLayer(g, l) { const { mesh, paper, disc } = g.userData; if (mesh.layers.mask !== 1 << l) { mesh.layers.set(l); paper.layers.set(l); disc?.layers.set(l); } }
 function ensurePaper(i) { const p = cards[i]?.userData.paper; if (p && !p.material.map) { p.material.map = texOf(drawPaper(memos[i])); p.material.needsUpdate = true; } }
 async function rebuild() {
   await Promise.all([ensureFonts(memos.map(m => m.title + m.body).join('')), ...memos.map(m => loadImg(m.img))]);
@@ -793,7 +779,6 @@ function putBack() {
 function togglePin(i) {
   const m = memos[i]; if (!m) return i;
   m.pinned = !m.pinned; if (!m.pinned) delete m.pinned;
-  cards[i].userData.tab.visible = !!m.pinned;
   const j = moveMemo(i, m.pinned ? 0 : pinCount());
   store.save();
   if (pulled === i) pulled = j;

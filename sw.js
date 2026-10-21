@@ -1,4 +1,4 @@
-const CACHE = 'memo-crate-5763065bc2';
+const CACHE = 'memo-crate-be7f101d64';
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./vendor/three.module.js", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png", "./icons/apple-touch-icon.png"];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
